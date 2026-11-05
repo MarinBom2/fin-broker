@@ -99,6 +99,9 @@ CompanyMembership.status  (회원 → 업체 담당자 신청)
 | 담당자 `APPROVED` | ADMIN | `Member.roleType = COMPANY` (업체가 `VERIFIED` 일 때만) |
 | 담당자 `REVOKED` | ADMIN / 업체 만료 | `Member.roleType = USER` |
 
+- 운영자 화면의 대조 버튼은 `RegistrationStatus.allowedResults()` 가 정한다 (전이 표와 같은 곳). 지금 상태와 같은 결과(예: `VERIFIED` → `VERIFIED`)는 "다시 대조했는데 그대로"이고 `lastCheckedAt` 만 새로 잡는다
+- 재확인 필요: `VERIFIED` 인데 `lastCheckedAt` 에서 `company.recheck-after`(기본 90일)가 지난 업체 (`Company.needsRecheck`, 경계 포함). 지금은 운영자 화면 표시·걸러 보기만 하고, 자동 재확인은 배치(§14 4단계)
+
 **불변식**: `Member.roleType == COMPANY` ⇔ 그 회원의 `CompanyMembership.status == APPROVED` 이고 그 업체가 `VERIFIED`. 권한을 바꾸는 곳은 `CompanyMembership` 의 전이 메서드와 이를 부르는 서비스 하나다 (solid.md S).
 
 ### 4.2 글 작성과 피해 예방 경고
@@ -268,7 +271,7 @@ enum 칼럼은 varchar (`NoColumnCheckMySQLDialect`, develop-principal.md §5).
 | SCR-05 | 업체 조회 (등록 정보 + 후기) | `/companies`, `/companies/:companyId` | 구현 (후기 제외) |
 | SCR-06 | 피해 예방 안내 (사기 수법, 신고 창구, 받은 문자 검사) | `/safety` | 구현 |
 | SCR-07 | 로그인·가입 | `/login` | 구현 |
-| SCR-08 | 운영자 (업체 대조, 담당자 승인, 신고) | `/ops/reports` | 신고 처리 구현 (업체 대조·담당자 승인 화면 전) |
+| SCR-08 | 운영자 (업체 대조, 담당자 승인, 신고) | `/ops/reports`, `/ops/companies` | 신고 처리, 업체 관리(현황·걸러 보기·등록·대조·재확인 표시) 구현. 담당자 승인 화면 전 |
 | SCR-09 | 업체 담당자 인증 신청 | `/company/apply` | |
 
 ### 9.2 요구사항 (FR)
@@ -279,7 +282,7 @@ enum 칼럼은 varchar (`NoColumnCheckMySQLDialect`, develop-principal.md §5).
 | FR-AU-002 | 로그인·로그아웃·내 정보 (JWT HttpOnly 쿠키) | 구현 |
 | FR-AU-003 | 역할 기반 인가 (`USER`, `COMPANY`, `ADMIN`, `SYSTEM`) | 구현 (운영자 경로) |
 | FR-CO-001 | 업체 조회 (등록 정보, 확인 상태, 관련 후기) | 구현 (후기 제외) |
-| FR-CO-002 | 운영자 업체 등록·대조·만료 처리 | 구현 (API. 운영자 화면은 SCR-08) |
+| FR-CO-002 | 운영자 업체 목록·현황·등록·대조·만료 처리, 재확인 필요 표시 | 구현 (SCR-08 업체 관리) |
 | FR-CO-003 | 업체 담당자 인증 신청·승인·해제 | |
 | FR-CM-001 | 글 작성·수정·삭제 | 구현 |
 | FR-CM-002 | 글 목록·상세 | 구현 |
@@ -310,6 +313,8 @@ enum 칼럼은 varchar (`NoColumnCheckMySQLDialect`, develop-principal.md §5).
 | PATCH·DELETE | `/api/v1/posts/{postId}` | 작성자 (아니면 403) | FR-CM-001 |
 | PATCH·DELETE | `/api/v1/posts/{postId}/answers/{answerId}` | 작성자 (아니면 403) | FR-CM-003 |
 | POST | `/api/v1/reports` | 로그인 | FR-MD-001 |
+| GET | `/api/v1/ops/companies` (`?status=&recheckDue=&keyword=&page=&size=`, 새로 등록한 순) | ADMIN, SYSTEM | FR-CO-002 |
+| GET | `/api/v1/ops/companies/summary` (상태별 수, 재확인 필요 수) | ADMIN, SYSTEM | FR-CO-002 |
 | POST | `/api/v1/ops/companies` | ADMIN, SYSTEM | FR-CO-002 |
 | PATCH | `/api/v1/ops/companies/{companyId}/registration-status` (`{result}`) | ADMIN, SYSTEM | FR-CO-002 |
 | GET·PATCH | `/api/v1/ops/company-memberships/**` | ADMIN, SYSTEM | FR-CO-003 |

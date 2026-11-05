@@ -31,6 +31,12 @@ POST {{host}}/api/v1/auth/logout
 
 ### ---- 업체 (운영자: 위 내 권한 바꾸기에서 ADMIN 으로 바꾼 뒤) ----
 
+### 운영자 업체 목록 (FR-CO-002). 새로 등록한 순. status 없으면 전체, recheckDue=true 면 재확인 필요만
+GET {{host}}/api/v1/ops/companies?status=UNVERIFIED&page=1&size=20
+
+### 운영자 업체 현황: 상태별 수, 재확인 필요 수
+GET {{host}}/api/v1/ops/companies/summary
+
 ### 업체 등록 (FR-CO-002)
 POST {{host}}/api/v1/ops/companies
 Content-Type: application/json

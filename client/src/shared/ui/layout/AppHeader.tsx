@@ -28,9 +28,14 @@ export function AppHeader() {
             피해 예방
           </NavLink>
           {isAdmin(member) ? (
-            <NavLink to={ROUTES.SCR08_OPS_REPORTS} className="nav__link">
-              신고 처리
-            </NavLink>
+            <>
+              <NavLink to={ROUTES.SCR08_OPS_REPORTS} className="nav__link">
+                신고 처리
+              </NavLink>
+              <NavLink to={ROUTES.SCR08_OPS_COMPANIES} className="nav__link">
+                업체 관리
+              </NavLink>
+            </>
           ) : null}
         </nav>
         <div className="nav__account">

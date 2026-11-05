@@ -7,6 +7,7 @@ import PostListPage from './pages/community/PostListPage'
 import PostWritePage, { PostEditPage } from './pages/community/PostWritePage'
 import HomePage from './pages/home/HomePage'
 import LoginPage from './pages/login/LoginPage'
+import OpsCompaniesPage from './pages/ops/OpsCompaniesPage'
 import OpsReportsPage from './pages/ops/OpsReportsPage'
 import SafetyPage from './pages/safety/SafetyPage'
 import { ROUTES } from './routes'
@@ -70,6 +71,14 @@ export default function App() {
               element={
                 <RequireAdmin>
                   <OpsReportsPage />
+                </RequireAdmin>
+              }
+            />
+            <Route
+              path={ROUTES.SCR08_OPS_COMPANIES}
+              element={
+                <RequireAdmin>
+                  <OpsCompaniesPage />
                 </RequireAdmin>
               }
             />

@@ -37,6 +37,10 @@ warning:
   # 법정 최고금리 (연 %). 이 값을 넘는 금리 표기를 경고한다. 법령이 바뀌면 이 값만 고친다 (md/domain-design.md §6)
   interest-cap-percent: 20
 
+company:
+  # 등록 확인한 지 이 기간이 지나면 운영자 화면에 "재확인 필요"로 보인다 (등록 취소·만료를 놓치지 않게, md/domain-design.md §4.1)
+  recheck-after: 90d
+
 moderation:
   # 서로 다른 회원의 접수 신고가 이 수에 이르면 운영자 확인 전에 먼저 숨긴다 (md/domain-design.md §4.4)
   auto-hide-report-count: 3

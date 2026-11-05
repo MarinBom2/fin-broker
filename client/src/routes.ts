@@ -18,6 +18,8 @@ export const ROUTES = {
   SCR07_LOGIN: '/login',
   /** SCR-08 운영자 신고 처리 (?status=) */
   SCR08_OPS_REPORTS: '/ops/reports',
+  /** SCR-08 운영자 업체 관리 (?filter=, ?keyword=, ?page=) */
+  SCR08_OPS_COMPANIES: '/ops/companies',
 } as const
 
 export const postPath = (postId: number) => `/posts/${postId}`

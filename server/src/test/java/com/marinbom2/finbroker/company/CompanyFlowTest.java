@@ -1,5 +1,6 @@
 package com.marinbom2.finbroker.company;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -100,6 +101,53 @@ class CompanyFlowTest {
     }
 
     @Test
+    @DisplayName("운영자 목록: 새로 등록한 순, 상태·검색어로 거르고, 지금 남길 수 있는 대조 결과를 함께 준다")
+    void opsList() throws Exception {
+        String tag = UUID.randomUUID().toString().substring(0, 6);
+        long first = register("가나" + tag, "LENDER", uniqueNumber()).returnId();
+        long second = register("다라" + tag, "LOAN_BROKER", uniqueNumber()).returnId();
+        check(second, "VERIFIED").andExpect(jsonPath("$.allowedResults[*].code").value(
+                org.hamcrest.Matchers.contains("VERIFIED", "EXPIRED")));
+
+        mockMvc.perform(get("/api/v1/ops/companies").param("keyword", tag).cookie(admin))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].companyId").value(second))
+                .andExpect(jsonPath("$.content[0].recheckDue").value(false))
+                .andExpect(jsonPath("$.content[0].createdAt").isNotEmpty())
+                .andExpect(jsonPath("$.content[1].companyId").value(first))
+                .andExpect(jsonPath("$.content[1].allowedResults[*].code").value(
+                        org.hamcrest.Matchers.contains("VERIFIED", "NOT_FOUND")));
+
+        mockMvc.perform(get("/api/v1/ops/companies").param("keyword", tag).param("status", "UNVERIFIED").cookie(admin))
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].companyId").value(first));
+
+        // 방금 확인했으니 90일 기준 재확인 대상이 아니다
+        mockMvc.perform(get("/api/v1/ops/companies").param("keyword", tag).param("recheckDue", "true").cookie(admin))
+                .andExpect(jsonPath("$.content.length()").value(0));
+    }
+
+    @Test
+    @DisplayName("운영자 현황: 모든 상태가 enum 순서로 나오고, 등록·대조하면 해당 상태 수가 바뀐다")
+    void opsSummary() throws Exception {
+        long unverifiedBefore = statusCount(0);
+        long verifiedBefore = statusCount(1);
+
+        long companyId = register("가나대부", "LENDER", uniqueNumber()).returnId();
+        assertThat(statusCount(0)).isEqualTo(unverifiedBefore + 1);
+
+        check(companyId, "VERIFIED");
+        assertThat(statusCount(0)).isEqualTo(unverifiedBefore);
+        assertThat(statusCount(1)).isEqualTo(verifiedBefore + 1);
+
+        mockMvc.perform(get("/api/v1/ops/companies/summary").cookie(admin))
+                .andExpect(jsonPath("$.statuses[*].status.code").value(
+                        org.hamcrest.Matchers.contains("UNVERIFIED", "VERIFIED", "NOT_FOUND", "EXPIRED")))
+                .andExpect(jsonPath("$.recheckAfterDays").value(90));
+    }
+
+    @Test
     @DisplayName("검증: 같은 유형·등록번호 409, 허용되지 않는 전이 409, 없는 업체 404, 페이지 0 은 400")
     void validation() throws Exception {
         String number = uniqueNumber();
@@ -131,12 +179,15 @@ class CompanyFlowTest {
     }
 
     @Test
-    @DisplayName("권한: 일반 회원은 업체를 등록·대조할 수 없다 (403), 비로그인은 조회도 401")
+    @DisplayName("권한: 일반 회원은 업체 목록·현황·등록·대조를 쓸 수 없다 (403), 비로그인은 조회도 401")
     void authorization() throws Exception {
         mockMvc.perform(post("/api/v1/ops/companies").cookie(user).contentType(MediaType.APPLICATION_JSON)
                         .content(registerBody("가나대부", "LENDER", uniqueNumber())))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("FORBIDDEN"));
+
+        mockMvc.perform(get("/api/v1/ops/companies").cookie(user)).andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/ops/companies/summary").cookie(user)).andExpect(status().isForbidden());
 
         mockMvc.perform(get("/api/v1/companies"))
                 .andExpect(status().isUnauthorized());
@@ -145,6 +196,14 @@ class CompanyFlowTest {
     private RegisterResult register(String name, String type, String number) throws Exception {
         return new RegisterResult(mockMvc.perform(post("/api/v1/ops/companies").cookie(admin)
                 .contentType(MediaType.APPLICATION_JSON).content(registerBody(name, type, number))));
+    }
+
+    /** 현황에서 index 번째 상태(enum 순서)의 업체 수 */
+    private long statusCount(int index) throws Exception {
+        String body = mockMvc.perform(get("/api/v1/ops/companies/summary").cookie(admin))
+                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
+        Number count = JsonPath.read(body, "$.statuses[%d].count".formatted(index));
+        return count.longValue();
     }
 
     private ResultActions check(long companyId, String result) throws Exception {

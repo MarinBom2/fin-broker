@@ -10,6 +10,7 @@ import { CheckCircleIcon, ChevronLeftIcon, ChevronRightIcon, FlagIcon } from '..
 import { PageHead } from '../../shared/ui/PageHead'
 import { SegmentedControl } from '../../shared/ui/SegmentedControl'
 import { formatRelative } from '../../shared/utils/datetime'
+import { OpsNav } from './OpsNav'
 
 const PAGE_SIZE = 20
 const STATUSES: { value: ReportStatusCode; label: string }[] = [
@@ -70,6 +71,7 @@ export default function OpsReportsPage() {
 
   return (
     <>
+      <OpsNav />
       <PageHead
         eyebrow="운영"
         title="신고 처리"

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.marinbom2.finbroker.company.domain.exception.IllegalCompanyStateException;
+import java.time.Duration;
 import java.time.Instant;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -65,6 +66,30 @@ class CompanyTest {
         assertThatThrownBy(() -> company.recordCheck(to, 9L, NOW.plusSeconds(60)))
                 .isInstanceOf(IllegalCompanyStateException.class);
         assertThat(company.getRegistrationStatus()).isEqualTo(from);
+    }
+
+    @Test
+    @DisplayName("상태마다 남길 수 있는 대조 결과 (운영자 버튼). 확인 전으로 되돌리는 결과는 없다")
+    void allowedResults() {
+        assertThat(RegistrationStatus.UNVERIFIED.allowedResults())
+                .containsExactly(RegistrationStatus.VERIFIED, RegistrationStatus.NOT_FOUND);
+        assertThat(RegistrationStatus.VERIFIED.allowedResults())
+                .containsExactly(RegistrationStatus.VERIFIED, RegistrationStatus.EXPIRED);
+        for (RegistrationStatus status : RegistrationStatus.values()) {
+            assertThat(status.allowedResults()).doesNotContain(RegistrationStatus.UNVERIFIED);
+        }
+    }
+
+    @Test
+    @DisplayName("재확인 필요: 등록 확인한 지 기간이 지난 업체만 (경계값 포함). 확인 전·정보 없음은 대상이 아니다")
+    void needsRecheck() {
+        Duration ninetyDays = Duration.ofDays(90);
+        Company verified = companyIn(RegistrationStatus.VERIFIED);
+
+        assertThat(verified.needsRecheck(ninetyDays, NOW.plus(Duration.ofDays(89)))).isFalse();
+        assertThat(verified.needsRecheck(ninetyDays, NOW.plus(ninetyDays))).isTrue();
+        assertThat(company().needsRecheck(ninetyDays, NOW.plus(Duration.ofDays(365)))).isFalse();
+        assertThat(companyIn(RegistrationStatus.NOT_FOUND).needsRecheck(ninetyDays, NOW.plus(Duration.ofDays(365)))).isFalse();
     }
 
     private static Company company() {

@@ -12,6 +12,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
+import java.time.Duration;
 import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -94,5 +95,13 @@ public class Company extends BaseEntity {
 
     public boolean isVerified() {
         return registrationStatus == RegistrationStatus.VERIFIED;
+    }
+
+    /**
+     * 등록 확인한 지 interval 이 지나 다시 대조해야 하는지 (등록 취소·만료를 놓치지 않으려는 것, md/domain-design.md §4.1).
+     * 확인되지 않은 업체는 재확인 대상이 아니라 대조 대상이라 false.
+     */
+    public boolean needsRecheck(Duration interval, Instant now) {
+        return isVerified() && lastCheckedAt != null && !lastCheckedAt.plus(interval).isAfter(now);
     }
 }
