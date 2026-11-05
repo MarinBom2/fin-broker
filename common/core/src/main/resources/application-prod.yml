@@ -1,0 +1,36 @@
+# 운영 프로필. 비밀 값은 전부 환경변수로 받는다 (md/develop-principal.md §6). 이 파일에는 값을 적지 않는다.
+#   DB_URL, DB_USERNAME, DB_PASSWORD   DB 접속
+#   JWT_SECRET                         application.yml jwt.secret (비면 기동 실패, JwtConfig)
+server:
+  # 로드밸런서가 붙이는 X-Forwarded-Proto 를 믿는다. HTTPS 판단(Secure 쿠키, 리다이렉트 주소)에 필요하다
+  forward-headers-strategy: native
+spring:
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    url: ${DB_URL}
+    hikari:
+      auto-commit: false
+      pool-name: fin-broker-cp
+      maximum-pool-size: 20
+      minimum-idle: 0
+      idle-timeout: 600000        # 10분(유휴시 반납)
+      max-lifetime: 1700000       # ~28m (DB wait_timeout 보다 짧게)
+      connection-timeout: 10000
+  jpa:
+    hibernate:
+      # 스키마 관리 도구(Flyway 등)를 정하기 전까지 update. 정하면 validate 로 바꾼다 (md/todo.md)
+      ddl-auto: update
+    properties:
+      hibernate:
+        default_batch_fetch_size: 100
+        order_inserts: true
+        order_updates: true
+
+# 운영에서는 API 문서와 Swagger UI 를 열지 않는다 (경로·스키마 노출 방지)
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

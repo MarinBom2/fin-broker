@@ -1,0 +1,30 @@
+### 로컬 API 호출 모음 (IntelliJ HTTP Client / VS Code REST Client)
+### 서버: ./gradlew :server:bootRun (9090). 쿠키는 클라이언트가 자동으로 이어 붙인다
+@host = http://localhost:9090
+
+### 가입 (FR-AU-001)
+POST {{host}}/api/v1/auth/signup
+Content-Type: application/json
+
+{"email": "tester@example.com", "password": "Passw0rd!"}
+
+### 로그인 (FR-AU-002) — Set-Cookie: finbroker_at
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{"email": "tester@example.com", "password": "Passw0rd!"}
+
+### 내 정보
+GET {{host}}/api/v1/me
+
+### 내 권한 바꾸기 (local 전용, FR-AU-003)
+PATCH {{host}}/api/v1/me/role
+Content-Type: application/json
+
+{"roleType": "BROKER"}
+
+### 운영자 API 인가 확인 (ADMIN 이 아니면 403, ADMIN 이면 아직 컨트롤러가 없어 404)
+GET {{host}}/api/v1/ops/summary
+
+### 로그아웃
+POST {{host}}/api/v1/auth/logout
