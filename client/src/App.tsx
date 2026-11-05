@@ -4,12 +4,14 @@ import CompanyDetailPage from './pages/company/CompanyDetailPage'
 import CompanyListPage from './pages/company/CompanyListPage'
 import PostDetailPage from './pages/community/PostDetailPage'
 import PostListPage from './pages/community/PostListPage'
-import PostWritePage from './pages/community/PostWritePage'
+import PostWritePage, { PostEditPage } from './pages/community/PostWritePage'
 import HomePage from './pages/home/HomePage'
 import LoginPage from './pages/login/LoginPage'
+import OpsReportsPage from './pages/ops/OpsReportsPage'
 import SafetyPage from './pages/safety/SafetyPage'
 import { ROUTES } from './routes'
 import { AuthProvider } from './shared/auth/AuthContext'
+import { RequireAdmin } from './shared/auth/RequireAdmin'
 import { RequireAuth } from './shared/auth/RequireAuth'
 import { AppFooter } from './shared/ui/layout/AppFooter'
 import { AppHeader } from './shared/ui/layout/AppHeader'
@@ -53,6 +55,22 @@ export default function App() {
                 <RequireAuth>
                   <PostWritePage />
                 </RequireAuth>
+              }
+            />
+            <Route
+              path={ROUTES.SCR04_POST_EDIT}
+              element={
+                <RequireAuth>
+                  <PostEditPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path={ROUTES.SCR08_OPS_REPORTS}
+              element={
+                <RequireAdmin>
+                  <OpsReportsPage />
+                </RequireAdmin>
               }
             />
             <Route

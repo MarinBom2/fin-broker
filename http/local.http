@@ -74,3 +74,27 @@ POST {{host}}/api/v1/posts/1/answers
 Content-Type: application/json
 
 {"body": "공식 상담 창구에 먼저 물어보세요"}
+
+### 글 고치기 (작성자만, 아니면 403)
+PATCH {{host}}/api/v1/posts/1
+Content-Type: application/json
+
+{"postType": "QUESTION", "loanType": "CREDIT", "companyId": null, "title": "고친 제목", "body": "고친 내용"}
+
+### 글 지우기 (작성자만)
+DELETE {{host}}/api/v1/posts/1
+
+### ---- 신고 (FR-MD-001) ----
+POST {{host}}/api/v1/reports
+Content-Type: application/json
+
+{"targetType": "POST", "targetId": 2, "reason": "PROMOTION", "detail": "업체 홍보 글 같아요"}
+
+### 운영자 신고 목록 (대상 단위로 묶음)
+GET {{host}}/api/v1/ops/reports?status=OPEN
+
+### 운영자 처리: ACCEPTED(숨김) / DISMISSED(문제없음, 숨겨진 대상 복구)
+PATCH {{host}}/api/v1/ops/reports/1
+Content-Type: application/json
+
+{"decision": "ACCEPTED"}

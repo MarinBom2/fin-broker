@@ -1,5 +1,6 @@
 package com.marinbom2.finbroker.community.domain;
 
+import com.marinbom2.finbroker.community.domain.exception.NotAuthorException;
 import com.marinbom2.finbroker.domain.base.BaseEntity;
 import com.marinbom2.finbroker.member.domain.RoleType;
 import com.marinbom2.finbroker.warning.domain.WarningType;
@@ -99,9 +100,80 @@ public class Post extends BaseEntity {
         return post;
     }
 
+    /**
+     * 작성자가 글을 고친다 (FR-CM-001). 주의 신호는 고친 내용으로 다시 검사한 결과로 바꾼다.
+     *
+     * @throws NotAuthorException 작성자가 아닐 때
+     */
+    public void edit(Long memberId, PostType postType, LoanType loanType, Long companyId, String title, String body,
+                     Set<WarningType> warnings) {
+        requireAuthor(memberId);
+        requirePublished();
+        this.postType = postType;
+        this.loanType = loanType;
+        this.companyId = companyId;
+        this.title = title.strip();
+        this.body = body.strip();
+        replaceWarnings(warnings);
+    }
+
+    /**
+     * 작성자가 글을 지운다 (FR-CM-001). 행은 남기고 내용은 비운다 (개인정보·다른 회원의 답변 관계 때문에 행을 지우지 않는다).
+     *
+     * @throws NotAuthorException 작성자가 아닐 때
+     */
+    public void delete(Long memberId) {
+        requireAuthor(memberId);
+        requirePublished();
+        this.status = PostStatus.DELETED;
+        this.title = "";
+        this.body = "";
+        this.companyId = null;
+        this.warnings.clear();
+    }
+
+    /** 운영자 숨김·신고 누적 (FR-MD-002). 게시 상태일 때만 바뀐다 (이미 숨김·삭제면 그대로) */
+    public void hide() {
+        if (status == PostStatus.PUBLISHED) {
+            this.status = PostStatus.HIDDEN;
+        }
+    }
+
+    /** 운영자가 신고를 "문제없음"으로 처리하면 숨김을 푼다. 숨김 상태일 때만 바뀐다 */
+    public void restore() {
+        if (status == PostStatus.HIDDEN) {
+            this.status = PostStatus.PUBLISHED;
+        }
+    }
+
     /** 답변이 하나 늘었다. 답변 저장과 같은 트랜잭션에서 부른다 (@Version 으로 동시 갱신을 막는다) */
     public void increaseAnswerCount() {
         this.answerCount++;
+    }
+
+    /** 게시 중인 답변이 하나 줄었다 (삭제·숨김). 0 아래로 내려가지 않는다 */
+    public void decreaseAnswerCount() {
+        if (this.answerCount > 0) {
+            this.answerCount--;
+        }
+    }
+
+    private void requireAuthor(Long memberId) {
+        if (!isWrittenBy(memberId)) {
+            throw new NotAuthorException("post", id, memberId);
+        }
+    }
+
+    /** 서비스는 게시 상태 글만 읽어 넘긴다. 여기까지 오면 호출부 버그다 */
+    private void requirePublished() {
+        if (!isPublished()) {
+            throw new IllegalStateException("게시 상태가 아닌 글: " + id);
+        }
+    }
+
+    private void replaceWarnings(Set<WarningType> next) {
+        this.warnings.clear();
+        this.warnings.addAll(next);
     }
 
     public boolean isPublished() {

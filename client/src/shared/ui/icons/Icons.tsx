@@ -126,6 +126,24 @@ export const XIcon = (p: IconProps) => (
   </svg>
 )
 
+export const CheckIcon = (p: IconProps) => (
+  <svg {...base({ size: 18, strokeWidth: 2.6, ...p })}>
+    <path d="m5 12.5 4.5 4.5L19 7.5" />
+  </svg>
+)
+
+export const FlagIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M5 21V4M5 4h11l-2 4 2 4H5" />
+  </svg>
+)
+
+export const TrashIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />
+  </svg>
+)
+
 export const BrandMark = (p: IconProps) => (
   <svg {...base({ size: 14, strokeWidth: 2.4, ...p })}>
     <path d="M12 4 6 6.5v4.8c0 3.6 2.5 6.6 6 7.7 3.5-1.1 6-4.1 6-7.7V6.5L12 4Z" />

@@ -55,6 +55,9 @@ export interface Answer {
   body: string
   warnings: WarningTypeInfo[]
   createdAt: string
+  modifiedAt: string
+  /** 내가 신고한 답변인지 */
+  reportedByMe: boolean
 }
 
 /** 서버 PostDetailResponse */
@@ -69,6 +72,9 @@ export interface PostDetail {
   company: CompanyRef | null
   warnings: WarningTypeInfo[]
   createdAt: string
+  modifiedAt: string
+  /** 내가 신고한 글인지 */
+  reportedByMe: boolean
   answers: Answer[]
 }
 
@@ -91,6 +97,19 @@ export const communityApi = {
     apiRequest<PostDetail>('/api/v1/posts', { method: 'POST', body: JSON.stringify(request) }),
   answer: (postId: number, body: string) =>
     apiRequest<Answer>(`/api/v1/posts/${postId}/answers`, { method: 'POST', body: JSON.stringify({ body }) }),
+  /** 작성자만. 아니면 ApiError.code === 'FORBIDDEN' */
+  edit: (postId: number, request: PostWriteRequest) =>
+    apiRequest<PostDetail>(`/api/v1/posts/${postId}`, { method: 'PATCH', body: JSON.stringify(request) }),
+  remove: (postId: number) => apiRequest<void>(`/api/v1/posts/${postId}`, { method: 'DELETE' }),
+  editAnswer: (postId: number, answerId: number, body: string) =>
+    apiRequest<Answer>(`/api/v1/posts/${postId}/answers/${answerId}`, { method: 'PATCH', body: JSON.stringify({ body }) }),
+  removeAnswer: (postId: number, answerId: number) =>
+    apiRequest<void>(`/api/v1/posts/${postId}/answers/${answerId}`, { method: 'DELETE' }),
+}
+
+/** 고친 적 있는지 (저장 시각과 수정 시각이 1초 넘게 다르면) */
+export function isEdited(item: { createdAt: string; modifiedAt: string }) {
+  return new Date(item.modifiedAt).getTime() - new Date(item.createdAt).getTime() > 1000
 }
 
 /** CONTENT_BLOCKED 응답에 실린 신호 목록. 다른 오류면 null */

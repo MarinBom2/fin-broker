@@ -452,3 +452,270 @@
     flex: 1;
   }
 }
+
+/* ---- 글·답변 동작 (수정·삭제·신고) ---- */
+
+.post__meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.action:hover {
+  background: var(--fill);
+  color: var(--text);
+  text-decoration: none;
+}
+
+.action--destructive:hover {
+  color: var(--red);
+}
+
+.action--done {
+  color: var(--text-tertiary);
+  cursor: default;
+}
+
+.action--done:hover {
+  background: transparent;
+  color: var(--text-tertiary);
+}
+
+.answer__edit-actions {
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.btn--danger {
+  background: var(--red);
+  color: #fff;
+}
+
+.btn--danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--red) 88%, #000);
+}
+
+.row__check {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+/* ---- 창 (확인 대화상자, 신고 시트) ---- */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: fade-in 0.2s var(--ease);
+}
+
+.modal__panel {
+  width: 100%;
+  background: var(--bg-elevated);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.24);
+  animation: pop-in 0.25s var(--ease);
+}
+
+.modal__panel--alert {
+  max-width: 300px;
+  border-radius: 16px;
+  overflow: hidden;
+  text-align: center;
+}
+
+.modal__panel--sheet {
+  max-width: 480px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  border-radius: var(--radius-l);
+  padding: 24px;
+  background: var(--bg);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+.alert {
+  padding: 20px 18px 16px;
+}
+
+.alert__title {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.alert__message {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.alert__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--separator);
+}
+
+.alert__button {
+  height: 44px;
+  border: 0;
+  background: transparent;
+  font-size: 17px;
+  color: var(--accent-text);
+  cursor: pointer;
+}
+
+.alert__button + .alert__button {
+  border-left: 1px solid var(--separator);
+}
+
+.alert__button:hover {
+  background: var(--fill);
+}
+
+.alert__button--destructive {
+  color: var(--red);
+  font-weight: 600;
+}
+
+.sheet__head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sheet__title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.sheet__detail {
+  min-height: 72px;
+  background: var(--bg-elevated);
+}
+
+.sheet__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.sheet__done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 8px 4px;
+  text-align: center;
+  color: var(--green);
+}
+
+.sheet__done .sheet__title {
+  color: var(--text);
+}
+
+/* ---- 운영자 신고 처리 (SCR-08) ---- */
+
+.ops-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ops-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  border-radius: var(--radius-m);
+  background: var(--bg-elevated);
+  box-shadow: var(--shadow-card);
+}
+
+.ops-card__title {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.ops-card__excerpt {
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+
+.ops-card__details {
+  list-style: none;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--fill);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+
+@media (max-width: 734px) {
+  .modal {
+    place-items: end center;
+    padding: 0;
+  }
+
+  .modal__panel--sheet {
+    max-width: none;
+    border-radius: var(--radius-l) var(--radius-l) 0 0;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    animation: slide-up 0.3s var(--ease);
+  }
+
+  .modal__panel--alert {
+    margin-bottom: 40vh;
+  }
+}

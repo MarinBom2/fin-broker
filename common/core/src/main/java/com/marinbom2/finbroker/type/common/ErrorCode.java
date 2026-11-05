@@ -18,6 +18,7 @@ public enum ErrorCode implements DescriptionCode {
     BAD_REQUEST(400, "잘못된 요청입니다."),
     INVALID_REQUEST_DATA(400, "입력값을 다시 확인해 주세요."),
     CONTENT_BLOCKED(400, "글에 쓸 수 없는 내용이 있어요. 표시된 부분을 지우고 다시 올려 주세요."),
+    SELF_REPORT(400, "내가 쓴 글이나 답변은 신고할 수 없어요."),
 
     /* 401 */
     UNAUTHORIZED(401, "로그인이 필요합니다."),
@@ -33,6 +34,8 @@ public enum ErrorCode implements DescriptionCode {
     NOT_FOUND_MEMBER(404, "회원 정보를 찾을 수 없습니다."),
     NOT_FOUND_COMPANY(404, "업체 정보를 찾을 수 없습니다."),
     NOT_FOUND_POST(404, "글을 찾을 수 없습니다. 삭제되었거나 숨겨진 글일 수 있습니다."),
+    NOT_FOUND_ANSWER(404, "답변을 찾을 수 없습니다. 삭제되었거나 숨겨진 답변일 수 있습니다."),
+    NOT_FOUND_REPORT(404, "신고를 찾을 수 없습니다."),
 
     /* 405 */
     METHOD_NOT_ALLOWED(405, "지원하지 않는 요청 방식입니다."),
@@ -41,6 +44,7 @@ public enum ErrorCode implements DescriptionCode {
     CONFLICT(409, "요청이 현재 상태와 충돌합니다."),
     ALREADY_EXIST(409, "이미 존재합니다."),
     COMPANY_STATE_CONFLICT(409, "지금 업체 등록 상태에서는 할 수 없는 처리입니다."),
+    ALREADY_REPORTED(409, "이미 신고했어요. 운영자가 확인하고 있어요."),
 
     /* 413 */
     PAYLOAD_TOO_LARGE(413, "요청 크기가 너무 큽니다."),

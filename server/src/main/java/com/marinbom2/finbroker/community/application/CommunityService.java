@@ -94,6 +94,60 @@ public class CommunityService {
         return new AnswerResult(answer, post.getAuthorId());
     }
 
+    /**
+     * FR-CM-001, FR-WN-002: 작성자가 글을 고친다. 고친 내용으로 피해 예방 검사를 다시 돈다.
+     *
+     * @throws com.marinbom2.finbroker.community.domain.exception.NotAuthorException 작성자가 아닐 때 (403)
+     */
+    @Transactional
+    public PostDetail edit(Member editor, Long postId, PostType postType, LoanType loanType, Long companyId, String title,
+                           String body) {
+        Post post = findPublished(postId);
+        Company company = companyId == null ? null : companyRepository.findById(companyId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_COMPANY));
+        WarningReport report = warningInspector.inspect(WarningTarget.of(title, body, companyId));
+        report.requireNotBlocked();
+
+        post.edit(editor.getId(), postType, loanType, companyId, title, body, report.warnTypes());
+        postRepository.flush(); // @Version 충돌을 이 트랜잭션 안에서 드러낸다
+        log.info("[community] edit postId={} warnings={}", postId, post.getWarnings());
+        return new PostDetail(post, company,
+                answerRepository.findByPostIdAndStatusOrderByIdAsc(postId, PostStatus.PUBLISHED));
+    }
+
+    /** FR-CM-001: 작성자가 글을 지운다. 내용은 비우고 행은 남긴다. 달린 답변은 글과 함께 보이지 않게 된다 */
+    @Transactional
+    public void delete(Member editor, Long postId) {
+        findPublished(postId).delete(editor.getId());
+        log.info("[community] delete postId={}", postId);
+    }
+
+    /** FR-CM-003, FR-WN-002: 작성자가 답변을 고친다 */
+    @Transactional
+    public AnswerResult editAnswer(Member editor, Long postId, Long answerId, String body) {
+        Post post = findPublished(postId);
+        Answer answer = findPublishedAnswer(postId, answerId);
+        WarningReport report = warningInspector.inspect(WarningTarget.of(null, body, null));
+        report.requireNotBlocked();
+
+        answer.edit(editor.getId(), body, report.warnTypes());
+        log.info("[community] edit answerId={} warnings={}", answerId, answer.getWarnings());
+        return new AnswerResult(answer, post.getAuthorId());
+    }
+
+    /** FR-CM-003: 작성자가 답변을 지운다. 글의 답변 수도 같은 트랜잭션에서 내려간다 */
+    @Transactional
+    public void deleteAnswer(Member editor, Long postId, Long answerId) {
+        Post post = findPublished(postId);
+        findPublishedAnswer(postId, answerId).delete(editor.getId(), post);
+        log.info("[community] delete answerId={} postId={}", answerId, postId);
+    }
+
+    private Answer findPublishedAnswer(Long postId, Long answerId) {
+        return answerRepository.findByIdAndPostIdAndStatus(answerId, postId, PostStatus.PUBLISHED)
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_ANSWER));
+    }
+
     private Post findPublished(Long postId) {
         return postRepository.findByIdAndStatus(postId, PostStatus.PUBLISHED)
                 .orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND_POST));

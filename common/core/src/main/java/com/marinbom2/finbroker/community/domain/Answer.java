@@ -1,5 +1,6 @@
 package com.marinbom2.finbroker.community.domain;
 
+import com.marinbom2.finbroker.community.domain.exception.NotAuthorException;
 import com.marinbom2.finbroker.domain.base.BaseEntity;
 import com.marinbom2.finbroker.member.domain.RoleType;
 import com.marinbom2.finbroker.warning.domain.WarningType;
@@ -76,7 +77,76 @@ public class Answer extends BaseEntity {
         return answer;
     }
 
+    /**
+     * 작성자가 답변을 고친다 (FR-CM-003). 주의 신호는 다시 검사한 결과로 바꾼다.
+     *
+     * @throws NotAuthorException 작성자가 아닐 때
+     */
+    public void edit(Long memberId, String body, Set<WarningType> warnings) {
+        requireAuthor(memberId);
+        requirePublished();
+        this.body = body.strip();
+        this.warnings.clear();
+        this.warnings.addAll(warnings);
+    }
+
+    /**
+     * 작성자가 답변을 지운다. 내용을 비우고, 글의 답변 수도 같이 내린다.
+     *
+     * @throws NotAuthorException 작성자가 아닐 때
+     */
+    public void delete(Long memberId, Post post) {
+        requireAuthor(memberId);
+        requirePublished();
+        requireSamePost(post);
+        this.status = PostStatus.DELETED;
+        this.body = "";
+        this.warnings.clear();
+        post.decreaseAnswerCount();
+    }
+
+    /** 운영자 숨김·신고 누적. 게시 상태일 때만 바뀌고, 글의 답변 수도 같이 내린다 */
+    public void hide(Post post) {
+        requireSamePost(post);
+        if (status == PostStatus.PUBLISHED) {
+            this.status = PostStatus.HIDDEN;
+            post.decreaseAnswerCount();
+        }
+    }
+
+    /** 숨김을 푼다. 숨김 상태일 때만 바뀌고, 글의 답변 수도 같이 올린다 */
+    public void restore(Post post) {
+        requireSamePost(post);
+        if (status == PostStatus.HIDDEN) {
+            this.status = PostStatus.PUBLISHED;
+            post.increaseAnswerCount();
+        }
+    }
+
+    public boolean isPublished() {
+        return status == PostStatus.PUBLISHED;
+    }
+
     public boolean isWrittenBy(Long memberId) {
         return authorId.equals(memberId);
+    }
+
+    private void requireAuthor(Long memberId) {
+        if (!isWrittenBy(memberId)) {
+            throw new NotAuthorException("answer", id, memberId);
+        }
+    }
+
+    private void requirePublished() {
+        if (!isPublished()) {
+            throw new IllegalStateException("게시 상태가 아닌 답변: " + id);
+        }
+    }
+
+    /** 답변 수는 이 답변이 달린 글에만 반영해야 한다 */
+    private void requireSamePost(Post post) {
+        if (!postId.equals(post.getId())) {
+            throw new IllegalArgumentException("답변 " + id + " 은 글 " + post.getId() + " 의 답변이 아닙니다");
+        }
     }
 }

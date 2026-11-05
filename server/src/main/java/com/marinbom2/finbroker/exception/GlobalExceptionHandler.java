@@ -1,5 +1,6 @@
 package com.marinbom2.finbroker.exception;
 
+import com.marinbom2.finbroker.community.domain.exception.NotAuthorException;
 import com.marinbom2.finbroker.company.domain.exception.IllegalCompanyStateException;
 import com.marinbom2.finbroker.type.common.ErrorCode;
 import com.marinbom2.finbroker.warning.domain.exception.ContentBlockedException;
@@ -52,6 +53,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .map(w -> Map.of("type", w.type(), "evidence", w.evidence()))
                 .toList());
         return problem;
+    }
+
+    /** 작성자가 아닌 회원의 고치기·지우기 */
+    @ExceptionHandler(NotAuthorException.class)
+    public ProblemDetail handleNotAuthor(NotAuthorException e) {
+        log.info("not author: {}", e.getMessage());
+        return ProblemDetails.of(ErrorCode.FORBIDDEN, "내가 쓴 글·답변만 고치거나 지울 수 있어요.");
     }
 
     @ExceptionHandler(Exception.class)

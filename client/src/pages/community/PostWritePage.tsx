@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { postPath, ROUTES } from '../../routes'
 import { companyApi } from '../../shared/api/company/companyService'
 import type { Company } from '../../shared/api/company/companyService'
+import type { CompanyRef, PostDetail } from '../../shared/api/community/communityService'
 import { blockedWarnings, communityApi, LOAN_TYPES, POST_TYPES } from '../../shared/api/community/communityService'
 import type { LoanTypeCode, PostTypeCode } from '../../shared/api/community/communityService'
 import { warningApi } from '../../shared/api/warning/warningService'
@@ -21,15 +22,85 @@ const BODY_MAX = 5000
 const PREVIEW_DELAY_MS = 600
 const COMPANY_SEARCH_DELAY_MS = 300
 
-/** SCR-04 글쓰기 (FR-CM-001, FR-WN-001). 입력하는 동안 위험 신호를 미리 보여 주고, 저장 때 서버가 다시 검사한다 */
-export default function PostWritePage() {
-  const navigate = useNavigate()
+/** 고른 업체. 검색 결과(Company)와 글에 붙은 업체(CompanyRef) 둘 다 담을 수 있게 등록번호는 선택 */
+type PickedCompany = CompanyRef & { registrationNumber?: string }
 
-  const [postType, setPostType] = useState<PostTypeCode>('QUESTION')
-  const [loanType, setLoanType] = useState<LoanTypeCode>('CREDIT')
-  const [title, setTitle] = useState('')
-  const [body, setBody] = useState('')
-  const [company, setCompany] = useState<Company | null>(null)
+interface FormValues {
+  postType: PostTypeCode
+  loanType: LoanTypeCode
+  title: string
+  body: string
+  company: PickedCompany | null
+}
+
+const EMPTY: FormValues = { postType: 'QUESTION', loanType: 'CREDIT', title: '', body: '', company: null }
+
+/** SCR-04 글쓰기 (FR-CM-001) */
+export default function PostWritePage() {
+  return <PostForm initial={EMPTY} />
+}
+
+/** SCR-04 글 고치기 (FR-CM-001). 글을 읽어 같은 화면에 채운다. 남의 글이면 서버가 403 을 준다 */
+export function PostEditPage() {
+  const { postId } = useParams()
+  const id = Number(postId)
+  const validId = Number.isInteger(id) && id > 0
+  const [post, setPost] = useState<PostDetail | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
+  const error = validId ? loadError : '글을 찾을 수 없습니다.'
+
+  useEffect(() => {
+    if (!validId) return
+    let cancelled = false
+    communityApi
+      .get(id)
+      .then((data) => {
+        if (cancelled) return
+        if (data.mine) setPost(data)
+        else setLoadError('내가 쓴 글만 고칠 수 있어요.')
+      })
+      .catch((e) => {
+        if (!cancelled) setLoadError(errorMessage(e, '글을 불러오지 못했습니다.'))
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [id, validId])
+
+  if (error) {
+    return (
+      <p className="error-text" role="alert">
+        {error}
+      </p>
+    )
+  }
+  if (!post) {
+    return <div className="skeleton skeleton--detail" />
+  }
+  return (
+    <PostForm
+      postId={post.postId}
+      initial={{
+        postType: post.postType.code,
+        loanType: post.loanType.code,
+        title: post.title,
+        body: post.body,
+        company: post.company,
+      }}
+    />
+  )
+}
+
+/** 글쓰기·고치기 공용 양식 (FR-WN-001). 입력하는 동안 위험 신호를 미리 보여 주고, 저장 때 서버가 다시 검사한다 */
+function PostForm({ initial, postId }: { initial: FormValues; postId?: number }) {
+  const navigate = useNavigate()
+  const editing = postId !== undefined
+
+  const [postType, setPostType] = useState<PostTypeCode>(initial.postType)
+  const [loanType, setLoanType] = useState<LoanTypeCode>(initial.loanType)
+  const [title, setTitle] = useState(initial.title)
+  const [body, setBody] = useState(initial.body)
+  const [company, setCompany] = useState<PickedCompany | null>(initial.company)
 
   const [companyKeyword, setCompanyKeyword] = useState('')
   const [companyResults, setCompanyResults] = useState<Company[]>([])
@@ -102,15 +173,16 @@ export default function PostWritePage() {
     setError(null)
     setBlocked(null)
     try {
-      const written = await communityApi.write({ postType, loanType, companyId, title, body })
-      navigate(postPath(written.postId), { replace: true })
+      const request = { postType, loanType, companyId, title, body }
+      const saved = editing ? await communityApi.edit(postId, request) : await communityApi.write(request)
+      navigate(postPath(saved.postId), { replace: true })
     } catch (e) {
       const blockedList = blockedWarnings(e)
       if (blockedList) {
         setBlocked(blockedList)
       } else {
         const fieldMessage = e instanceof ApiError ? e.fieldErrors[0]?.message : undefined
-        setError(fieldMessage ?? errorMessage(e, '글을 올리지 못했습니다.'))
+        setError(fieldMessage ?? errorMessage(e, editing ? '글을 고치지 못했습니다.' : '글을 올리지 못했습니다.'))
       }
     } finally {
       setSubmitting(false)
@@ -119,10 +191,13 @@ export default function PostWritePage() {
 
   return (
     <>
-      <Link to={ROUTES.SCR02_POSTS} className="back-link">
-        <ChevronLeftIcon /> 커뮤니티
+      <Link to={editing ? postPath(postId) : ROUTES.SCR02_POSTS} className="back-link">
+        <ChevronLeftIcon /> {editing ? '글로 돌아가기' : '커뮤니티'}
       </Link>
-      <PageHead title="글쓰기" lede="익명으로 올라가요. 쓰는 동안 위험 신호를 미리 알려 드릴게요." />
+      <PageHead
+        title={editing ? '글 고치기' : '글쓰기'}
+        lede={editing ? '고친 내용도 다시 검사해요. 위험 신호가 바뀌면 글의 배지도 바뀌어요.' : '익명으로 올라가요. 쓰는 동안 위험 신호를 미리 알려 드릴게요.'}
+      />
 
       <form className="stack write-form" onSubmit={handleSubmit}>
         <section className="card stack">
@@ -156,7 +231,7 @@ export default function PostWritePage() {
                 </span>
                 <span className="row__main">
                   <span className="row__title">{company.name}</span>
-                  <span className="row__sub">{company.registrationNumber}</span>
+                  {company.registrationNumber ? <span className="row__sub">{company.registrationNumber}</span> : null}
                 </span>
                 <StatusPill status={company.registrationStatus} />
                 <button type="button" className="icon-button" aria-label="업체 선택 지우기" onClick={() => setCompany(null)}>
@@ -274,11 +349,11 @@ export default function PostWritePage() {
         ) : null}
 
         <div className="write-form__actions">
-          <Link to={ROUTES.SCR02_POSTS} className="btn btn--secondary">
+          <Link to={editing ? postPath(postId) : ROUTES.SCR02_POSTS} className="btn btn--secondary">
             취소
           </Link>
           <button type="submit" className="btn btn--primary" disabled={submitting || previewBlocked || !title.trim() || !body.trim()}>
-            {submitting ? '올리는 중…' : '올리기'}
+            {submitting ? '저장하는 중…' : editing ? '저장' : '올리기'}
           </button>
         </div>
       </form>

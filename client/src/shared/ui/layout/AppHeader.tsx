@@ -1,5 +1,6 @@
 import { Link, NavLink } from 'react-router-dom'
 import { ROUTES } from '../../../routes'
+import { isAdmin } from '../../auth/roles'
 import { useAuth } from '../../auth/useAuth'
 import { BrandMark } from '../icons/Icons'
 
@@ -26,6 +27,11 @@ export function AppHeader() {
           <NavLink to={ROUTES.SCR06_SAFETY} className="nav__link">
             피해 예방
           </NavLink>
+          {isAdmin(member) ? (
+            <NavLink to={ROUTES.SCR08_OPS_REPORTS} className="nav__link">
+              신고 처리
+            </NavLink>
+          ) : null}
         </nav>
         <div className="nav__account">
           {status === 'authenticated' && member ? (

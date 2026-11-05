@@ -7,9 +7,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-/** 글쓰기 (FR-CM-001). 예시 값은 가짜다 */
-@Schema(description = "글쓰기 요청")
-public record PostCreateRequest(
+/** 글쓰기·수정 (FR-CM-001). 예시 값은 가짜다 */
+@Schema(description = "글쓰기·수정 요청")
+public record PostWriteRequest(
         @Schema(description = "글 유형 코드", example = "QUESTION")
         @NotNull(message = "글 유형을 골라 주세요.") PostType postType,
 

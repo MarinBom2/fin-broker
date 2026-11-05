@@ -1,7 +1,7 @@
 # fin-broker 도메인 설계 — 대출 정보 커뮤니티
 
 > 상태: **초안**. 운영 주체는 **개인사업자(소프트웨어 판매업)** 이고, 대부업·대부중개업·대출모집 등록 없이 할 수 있는 범위로 설계한다 (§12). 대출나라 같은 대출 커뮤니티를 참고하되, 수익 구조는 가져오지 않고 신뢰(등록 확인·광고 분리·피해 예방)로 차별화한다.
-> 구현된 것: 회원·인증(§5.1), 업체 조회·운영자 등록·대조(§5.2), 피해 예방 규칙과 검사 API(§6), 커뮤니티 글·답변(§5.4·§5.5). 나머지는 리뷰 후 뼈대부터 채운다 (develop-principal.md §9).
+> 구현된 것: 회원·인증(§5.1), 업체 조회·운영자 등록·대조(§5.2), 피해 예방 규칙과 검사 API(§6), 커뮤니티 글·답변과 수정·삭제(§5.4·§5.5), 신고·운영자 처리(§4.4·§5.6). 나머지는 리뷰 후 뼈대부터 채운다 (develop-principal.md §9).
 > 관련 문서: [develop-principal.md](./develop-principal.md), [authentication-security.md](./authentication-security.md), [solid.md](./solid.md), [runtime-structure.md](./runtime-structure.md), [todo.md](./todo.md)
 > 모르는 값은 `[ ]`로 비워 둔다. 법령에 기대는 내용은 `[확인]`을 붙인 초안이고, 원문(대부업법, 금융소비자보호법, 정보통신망법, 전기통신사업법, 전자상거래법, 개인정보보호법)과 전문가 확인 뒤 확정한다. 이 문서는 법률 자문이 아니다.
 
@@ -124,6 +124,11 @@ Post: PUBLISHED ──신고 누적 / 운영자──> HIDDEN ──운영자 �
                 └──작성자 삭제──> DELETED (내용 비움, 행은 남김)
 Report: OPEN ──운영자──> ACCEPTED(글 숨김) | DISMISSED
 ```
+
+- **처리는 대상 단위다.** 운영자가 신고 하나를 처리하면 같은 대상의 접수 신고가 모두 같은 결과로 닫힌다. 운영자 목록도 대상 하나당 한 줄로 묶어 사유·메모·건수를 보여 준다.
+- **신고 누적 자동 숨김:** 서로 다른 회원의 접수 신고가 `moderation.auto-hide-report-count`(기본 3)에 이르면 운영자 확인 전에 먼저 숨긴다. 운영자가 "문제없음"으로 처리하면 되살아난다.
+- 한 회원은 같은 대상을 한 번만 신고한다 (유니크 제약). 내 글·답변은 신고할 수 없다.
+- 작성자가 지운 글·답변은 행을 남기고 내용을 비운다. 숨김·삭제된 글은 사용자 API 에서 없는 글(404)로 다룬다.
 
 권리 침해 신고(명예훼손 등)를 받으면 정보통신망법의 임시조치 절차를 따른다 `[확인: 절차와 기간]`.
 
@@ -263,7 +268,7 @@ enum 칼럼은 varchar (`NoColumnCheckMySQLDialect`, develop-principal.md §5).
 | SCR-05 | 업체 조회 (등록 정보 + 후기) | `/companies`, `/companies/:companyId` | 구현 (후기 제외) |
 | SCR-06 | 피해 예방 안내 (사기 수법, 신고 창구, 받은 문자 검사) | `/safety` | 구현 |
 | SCR-07 | 로그인·가입 | `/login` | 구현 |
-| SCR-08 | 운영자 (업체 대조, 담당자 승인, 신고) | `/ops` | |
+| SCR-08 | 운영자 (업체 대조, 담당자 승인, 신고) | `/ops/reports` | 신고 처리 구현 (업체 대조·담당자 승인 화면 전) |
 | SCR-09 | 업체 담당자 인증 신청 | `/company/apply` | |
 
 ### 9.2 요구사항 (FR)
@@ -276,13 +281,13 @@ enum 칼럼은 varchar (`NoColumnCheckMySQLDialect`, develop-principal.md §5).
 | FR-CO-001 | 업체 조회 (등록 정보, 확인 상태, 관련 후기) | 구현 (후기 제외) |
 | FR-CO-002 | 운영자 업체 등록·대조·만료 처리 | 구현 (API. 운영자 화면은 SCR-08) |
 | FR-CO-003 | 업체 담당자 인증 신청·승인·해제 | |
-| FR-CM-001 | 글 작성·수정·삭제 | 작성 구현 (수정·삭제 전) |
+| FR-CM-001 | 글 작성·수정·삭제 | 구현 |
 | FR-CM-002 | 글 목록·상세 | 구현 |
 | FR-CM-003 | 답변 작성 (업체 답변 구분 표시) | 구현 |
 | FR-WN-001 | 피해 예방 경고 미리 보기 | 구현 |
 | FR-WN-002 | 저장 시 경고 판정 (BLOCK 거부, WARN 배지) | 구현 (400 `CONTENT_BLOCKED` + `warnings`) |
-| FR-MD-001 | 글·답변 신고 | |
-| FR-MD-002 | 운영자 신고 처리·숨김 | |
+| FR-MD-001 | 글·답변 신고 | 구현 (신고 누적 자동 숨김 포함) |
+| FR-MD-002 | 운영자 신고 처리·숨김 | 구현 (대상 단위 처리) |
 
 ---
 
@@ -302,11 +307,14 @@ enum 칼럼은 varchar (`NoColumnCheckMySQLDialect`, develop-principal.md §5).
 | GET | `/api/v1/posts/{postId}` | 로그인 | FR-CM-002 |
 | POST | `/api/v1/posts/{postId}/answers` | 로그인 | FR-CM-003, FR-WN-002 |
 | POST | `/api/v1/warnings/check` | 로그인 | FR-WN-001 |
+| PATCH·DELETE | `/api/v1/posts/{postId}` | 작성자 (아니면 403) | FR-CM-001 |
+| PATCH·DELETE | `/api/v1/posts/{postId}/answers/{answerId}` | 작성자 (아니면 403) | FR-CM-003 |
 | POST | `/api/v1/reports` | 로그인 | FR-MD-001 |
 | POST | `/api/v1/ops/companies` | ADMIN, SYSTEM | FR-CO-002 |
 | PATCH | `/api/v1/ops/companies/{companyId}/registration-status` (`{result}`) | ADMIN, SYSTEM | FR-CO-002 |
 | GET·PATCH | `/api/v1/ops/company-memberships/**` | ADMIN, SYSTEM | FR-CO-003 |
-| GET·PATCH | `/api/v1/ops/reports/**` | ADMIN, SYSTEM | FR-MD-002 |
+| GET | `/api/v1/ops/reports?status=` (대상 단위로 묶음) | ADMIN, SYSTEM | FR-MD-002 |
+| PATCH | `/api/v1/ops/reports/{reportId}` (`{decision}`) | ADMIN, SYSTEM | FR-MD-002 |
 
 없는 API (만들지 않는다): 상담 신청, 업체에 문의 전달, 업체 순위·추천, 업체 광고 등록.
 비로그인 공개 경로가 생기면 `SecurityConfig` 의 허용 목록에 GET 경로를 더한다 (authentication-security.md §9).

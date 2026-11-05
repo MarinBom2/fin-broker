@@ -37,6 +37,10 @@ warning:
   # 법정 최고금리 (연 %). 이 값을 넘는 금리 표기를 경고한다. 법령이 바뀌면 이 값만 고친다 (md/domain-design.md §6)
   interest-cap-percent: 20
 
+moderation:
+  # 서로 다른 회원의 접수 신고가 이 수에 이르면 운영자 확인 전에 먼저 숨긴다 (md/domain-design.md §4.4)
+  auto-hide-report-count: 3
+
 jwt:
   # HS256 서명 키. 최소 32바이트여야 하고, 비워두면 기동할 때마다 임시 키를 만든다
   # (재기동하면 발급된 토큰이 전부 무효가 되고, 인스턴스가 여러 개면 서로 검증하지 못한다)

@@ -7,6 +7,8 @@ export const ROUTES = {
   SCR04_POST_NEW: '/posts/new',
   /** SCR-03 글 상세 + 답변 */
   SCR03_POST: '/posts/:postId',
+  /** SCR-04 글 고치기 (글쓰기 화면을 같이 쓴다) */
+  SCR04_POST_EDIT: '/posts/:postId/edit',
   /** SCR-05 업체 조회 (?keyword=, ?page=) */
   SCR05_COMPANIES: '/companies',
   SCR05_COMPANY: '/companies/:companyId',
@@ -14,9 +16,12 @@ export const ROUTES = {
   SCR06_SAFETY: '/safety',
   /** SCR-07 로그인·가입 (?next=, ?mode=signup) */
   SCR07_LOGIN: '/login',
+  /** SCR-08 운영자 신고 처리 (?status=) */
+  SCR08_OPS_REPORTS: '/ops/reports',
 } as const
 
 export const postPath = (postId: number) => `/posts/${postId}`
+export const postEditPath = (postId: number) => `/posts/${postId}/edit`
 export const companyPath = (companyId: number) => `/companies/${companyId}`
 export const loginPath = (next: string) => `/login?next=${encodeURIComponent(next)}`
 
