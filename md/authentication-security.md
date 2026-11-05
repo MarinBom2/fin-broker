@@ -13,7 +13,7 @@
 | 인증 주체 | `Member` 엔티티가 `UserDetails` 를 구현해 그대로 principal 이 된다 |
 | 토큰 | JWT(HS256), **HttpOnly 쿠키** `finbroker_at`, 유효 12시간. claim 은 회원 ID 와 토큰 버전뿐 |
 | 로그아웃 | `Member.tokenVersion` 을 1 올려 그 전에 발급한 토큰을 전부 무효화 |
-| 권한 | 토큰이 아니라 요청마다 DB 의 현재 값. `USER`(금융소비자), `BROKER`(판매대리·중개업자), `ADMIN`, `SYSTEM` (ROLE_ 접두사 없음) |
+| 권한 | 토큰이 아니라 요청마다 DB 의 현재 값. `USER`(금융소비자), `COMPANY`(등록 업체 담당자), `ADMIN`, `SYSTEM` (ROLE_ 접두사 없음) |
 | 세션 | 없음 (STATELESS) |
 | CSRF | 토큰 끔. SameSite=Lax 쿠키 + 같은 오리진 + CORS 없음으로 막는다 (6절) |
 | 오류 | 401·403·로그인 실패 모두 ProblemDetail + `code` (`SecurityErrorResponder`) |
@@ -104,7 +104,7 @@ MemberAuthenticationProvider.authenticate
 ```
 
 - **매니저를 직접 빈으로 만드는 이유**: 로그인 필터가 쓰는 매니저와 그 안의 프로바이더가 정확히 우리 것이어야 한다.
-- **토큰 타입을 따로 두는 이유**: `ProviderManager` 가 `supports()` 로 이 토큰을 `MemberAuthenticationProvider` 에만 보낸다. 다른 인증 방식(예: 소셜 로그인, 중개사 본인인증)을 추가하면 토큰 타입과 프로바이더를 하나씩 더하면 된다 (solid.md O).
+- **토큰 타입을 따로 두는 이유**: `ProviderManager` 가 `supports()` 로 이 토큰을 `MemberAuthenticationProvider` 에만 보낸다. 다른 인증 방식(예: 소셜 로그인, 업체 담당자 회사 메일 인증)을 추가하면 토큰 타입과 프로바이더를 하나씩 더하면 된다 (solid.md O).
 - **계정 존재 여부를 숨긴다**: 없는 이메일과 비밀번호 불일치를 같은 `BadCredentialsException`(→ 401 `LOGIN_FAILED`)으로 낸다. 없는 이메일일 때도 해시 비교를 한 번 해서 응답 시간으로 구분되지 않게 한다.
 - **로그인이 Swagger 에 보이게**: 필터라 springdoc 이 찾지 못하므로 `OpenApiConfig` 가 경로를 직접 적어 넣는다.
 
@@ -130,7 +130,7 @@ ExceptionTranslationFilter / AuthorizationFilter
 |---|---|
 | 필터는 응답을 쓰지 않는다 | 응답을 쓰는 곳을 `SecurityErrorResponder` 하나로 둔다. 공개 경로는 만료된 쿠키가 붙어 와도 정상 동작한다 |
 | 토큰에는 회원 ID 와 토큰 버전만 | 서명만 하고 암호화하지 않으므로 노출돼도 되는 값만. 이메일·권한을 넣지 않는다 |
-| 권한은 요청마다 DB 에서 | 중개사 승인·정지(domain-design.md §4.1)가 같은 토큰으로 바로 반영된다 (`AuthFlowTest.opsAuthorization`). 대신 요청마다 회원을 기본키로 한 번 읽는다. 늘면 Redis 캐시를 둔다 |
+| 권한은 요청마다 DB 에서 | 업체 담당자 승인·해제(domain-design.md §4.1)가 같은 토큰으로 바로 반영된다 (`AuthFlowTest.opsAuthorization`). 대신 요청마다 회원을 기본키로 한 번 읽는다. 늘면 Redis 캐시를 둔다 |
 | 로그아웃은 tokenVersion + 1 | 토큰 저장 테이블 없이 회원의 버전 숫자 하나로 폐기한다. 여러 기기 동시 로그인이 되고, 로그아웃하면 모든 기기에서 풀린다 |
 | 운영에서 서명 키 필수 | `prod` 프로필에서 `jwt.secret` 이 비면 기동을 멈춘다 (`JwtConfig`). 임시 키로 뜨면 인스턴스마다 키가 달라 로그인이 풀린다 |
 
@@ -176,7 +176,7 @@ principal 로 들어가는 `Member` 는 트랜잭션 밖에서 읽은 준영속 
 | 내 권한 바꾸기 `PATCH /api/v1/me/role` | `security.role.self-change-allowed` (false, `application-local.yml` 에서 true) | 값이 true 일 때. 꺼진 환경에서는 403 `FORBIDDEN` |
 
 - 백도어 이메일은 gitignore 된 `secrets/application-secret.yml` 에 둔다. 개인 이메일이 저장소에 남지 않는다.
-- 권한 바꾸기는 중개사(`BROKER`)·운영자 화면을 로컬에서 확인하려는 것이다. 운영에서 `BROKER` 권한은 중개사 등록 확인(domain-design.md §4.1)으로만 얻는다.
+- 권한 바꾸기는 업체(`COMPANY`)·운영자 화면을 로컬에서 확인하려는 것이다. 운영에서 `COMPANY` 권한은 업체 담당자 인증(domain-design.md §4.1)으로만 얻는다.
 - 백도어가 켜지면 기동 로그와 로그인마다 경고를 남긴다.
 
 ---
@@ -212,7 +212,7 @@ API:
 | PATCH | `/api/v1/me/role` | 필요 (local 설정에서만) | FR-AU-003 |
 | * | `/api/v1/ops/**` | `ADMIN`, `SYSTEM` | FR-AU-003, SCR-08 |
 
-새 공개 경로(예: 비로그인 글 읽기)가 생기면 `SecurityConfig.PERMIT_ALL_POST` 옆에 GET 허용 목록을 만들어 더한다. 중개사 전용 API 가 생기면 `hasAuthority("BROKER")` 경로를 더한다.
+새 공개 경로(예: 비로그인 글 읽기)가 생기면 `SecurityConfig.PERMIT_ALL_POST` 옆에 GET 허용 목록을 만들어 더한다. 업체 담당자 전용 API 가 생기면 `hasAuthority("COMPANY")` 경로를 더한다.
 
 ---
 
@@ -222,7 +222,7 @@ API:
 |---|---|---|---|
 | 패키지 | `com.gyeyakbom` | `com.marinbom2.finbroker` | 저장소 기존 패키지 |
 | 쿠키 이름 | `gyeyakbom_at` | `finbroker_at` | |
-| 역할 | `USER`, `ADMIN`, `SYSTEM` | + `BROKER`(판매대리·중개업자) | domain-design.md §2 |
+| 역할 | `USER`, `ADMIN`, `SYSTEM` | + `COMPANY`(등록 업체 담당자) | domain-design.md §2 |
 | 가입 | 이메일 인증번호 → 가입, 동의 세 가지 | 이메일·비밀번호만 | 메일 서버·약관이 정해지면 추가 (todo.md §2) |
 | 소셜 로그인 | 카카오·네이버 체인 (`security.oauth2`) | 옮기지 않음 | 필요해지면 두 번째 체인으로 추가 (3절 주의) |
 | `MemberService.signUp` 인자 | API DTO | `email`, `password` 값 | application 이 api 패키지를 모르게 (solid.md D) |
@@ -240,7 +240,7 @@ API:
 | `MemberAuthenticationProviderTest` | 성공, 계정 없음과 비밀번호 불일치가 같은 예외, 백도어, `supports` |
 | `SecurityErrorResponderTest` | 401·403 ProblemDetail, JWT 필터가 남긴 이유 반영 |
 | `GlobalExceptionHandlerTest` | 컨트롤러 단계 ProblemDetail, `@Valid` errors, Spring MVC 예외, 500 |
-| `AuthFlowTest` (MySQL Testcontainers) | 가입 → 로그인 쿠키 → 내 정보, 가입 검증(409·400), 로그인 실패(401·400), 무인증·위조 401, 운영자 API 403(USER·BROKER) → ADMIN 통과, 로그아웃 후 토큰 거절, 체인 밖 경로(헬스체크·API 문서), **실제 필터 순서** |
+| `AuthFlowTest` (MySQL Testcontainers) | 가입 → 로그인 쿠키 → 내 정보, 가입 검증(409·400), 로그인 실패(401·400), 무인증·위조 401, 운영자 API 403(USER·COMPANY) → ADMIN 통과, 로그아웃 후 토큰 거절, 체인 밖 경로(헬스체크·API 문서), **실제 필터 순서** |
 
 Testcontainers 테스트는 Docker 데몬이 없으면 건너뛴다 (`disabledWithoutDocker = true`).
 
@@ -250,5 +250,5 @@ Testcontainers 테스트는 Docker 데몬이 없으면 건너뛴다 (`disabledWi
 - [ ] 로그인 실패 횟수 제한(계정 잠금·요청 속도 제한, Redis)
 - [ ] 비밀번호 재설정, 탈퇴
 - [ ] 가입 이메일 인증, 약관·개인정보 동의 기록
-- [ ] 중개사 본인 확인 수단 (등록 확인과 별개로 본인인증을 받을지)
+- [ ] 업체 담당자 재직 확인 수단 (회사 메일, 재직 증빙)
 - [ ] 회원 조회 캐시: 사용자가 늘어 요청마다 회원 조회가 부담되면 Redis

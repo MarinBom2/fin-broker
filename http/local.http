@@ -21,7 +21,7 @@ GET {{host}}/api/v1/me
 PATCH {{host}}/api/v1/me/role
 Content-Type: application/json
 
-{"roleType": "BROKER"}
+{"roleType": "COMPANY"}
 
 ### 운영자 API 인가 확인 (ADMIN 이 아니면 403, ADMIN 이면 아직 컨트롤러가 없어 404)
 GET {{host}}/api/v1/ops/summary

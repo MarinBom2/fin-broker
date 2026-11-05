@@ -31,7 +31,7 @@ public class OpenApiConfig {
                 .title("fin-broker API")
                 .version("v1")
                 .description("""
-                        금융상품 판매대리·중개 커뮤니티 API. 경로는 /api/v1 아래에 둔다.
+                        대출 정보 커뮤니티 API. 경로는 /api/v1 아래에 둔다.
                         성공 응답은 DTO 그대로, 오류는 RFC 9457 ProblemDetail(application/problem+json)에 code(ErrorCode 이름)를 더해 보낸다.
                         인증은 HttpOnly 쿠키로 하므로, 같은 오리진에서 연 이 화면에서는 로그인 뒤 쿠키가 자동으로 붙는다.
                         """));

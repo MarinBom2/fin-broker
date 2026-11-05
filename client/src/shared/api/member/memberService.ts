@@ -2,7 +2,7 @@ import { apiRequest } from '../../core/apiClient'
 import type { CodeLabel } from '../../types/common'
 
 /** 서버 RoleType 과 1:1 */
-export type RoleCode = 'USER' | 'BROKER' | 'ADMIN' | 'SYSTEM'
+export type RoleCode = 'USER' | 'COMPANY' | 'ADMIN' | 'SYSTEM'
 
 /** 서버 MemberResponse */
 export interface MemberProfile {

@@ -133,7 +133,7 @@ class AuthFlowTest {
     }
 
     @Test
-    @DisplayName("운영자 API: USER·BROKER 는 403 FORBIDDEN, 권한을 ADMIN 으로 바꾸면 인가를 통과한다")
+    @DisplayName("운영자 API: USER·COMPANY 는 403 FORBIDDEN, 권한을 ADMIN 으로 바꾸면 인가를 통과한다")
     void opsAuthorization() throws Exception {
         String email = newEmail();
         mockMvc.perform(signup(email, PASSWORD)).andExpect(status().isCreated());
@@ -143,7 +143,7 @@ class AuthFlowTest {
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("FORBIDDEN"));
 
-        changeRole(cookie, "BROKER");
+        changeRole(cookie, "COMPANY");
         mockMvc.perform(get("/api/v1/ops/summary").cookie(cookie))
                 .andExpect(status().isForbidden());
 

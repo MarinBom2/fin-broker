@@ -36,7 +36,7 @@ public class MeController {
     }
 
     @Operation(summary = "내 권한 바꾸기 (local 전용)",
-            description = "FR-AU-003. 중개사·운영자 화면을 로컬에서 확인할 때 쓴다. security.role.self-change-allowed 가 꺼진 환경(운영)에서는 403")
+            description = "FR-AU-003. 업체·운영자 화면을 로컬에서 확인할 때 쓴다. security.role.self-change-allowed 가 꺼진 환경(운영)에서는 403")
     @ApiResponse(responseCode = "403", description = "FORBIDDEN",
             content = @Content(schema = @Schema(implementation = ProblemDetail.class)))
     @PatchMapping("/role")

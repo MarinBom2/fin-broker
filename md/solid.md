@@ -9,7 +9,7 @@
 
 | 원칙 | 한 줄 정의 | 위반 신호 | fin-broker 에서의 적용 |
 |---|---|---|---|
-| **S** 단일 책임 (SRP) | 클래스는 변경 이유가 하나여야 한다 | 한 클래스가 HTTP, 상태 전이, DB, 외부 SDK 를 모두 다룸 | 함께 지켜야 하는 불변식(예: 중개사 확인 상태와 회원 권한, 파일 본문과 메타 행의 저장 순서·버전)은 한 클래스에 둔다. 단일 책임을 이유로 정합성 규칙을 쪼개지 않는다 |
+| **S** 단일 책임 (SRP) | 클래스는 변경 이유가 하나여야 한다 | 한 클래스가 HTTP, 상태 전이, DB, 외부 SDK 를 모두 다룸 | 함께 지켜야 하는 불변식(예: 업체 담당자 인증 상태와 회원 권한, 파일 본문과 메타 행의 저장 순서·버전)은 한 클래스에 둔다. 단일 책임을 이유로 정합성 규칙을 쪼개지 않는다 |
 | **O** 개방-폐쇄 (OCP) | 확장에는 열려 있고 수정에는 닫혀 있어야 한다 | 공급자·저장소가 늘 때마다 `switch`/`if` 를 고침 | 확장점은 인터페이스 하나 + 빈 하나. AI 추가는 `LlmProvider` 값 + `LlmClient` 구현체 + 조건부 빈 |
 | **L** 리스코프 치환 (LSP) | 하위 타입은 상위 타입을 완전히 대체할 수 있어야 한다 | 구현체가 `UnsupportedOperationException` 을 던짐 | 구현체를 바꿔도 호출부 규약이 같게 인터페이스에 못박는다 (없는 파일 읽기는 예외가 아니라 empty 등) |
 | **I** 인터페이스 분리 (ISP) | 사용하지 않는 메서드에 의존하게 만들지 않는다 | 거대한 인터페이스, 빈 구현 메서드 | 실제로 호출되는 메서드만. 나중에 쓸 것 같은 메서드를 미리 넣지 않는다 |
@@ -27,28 +27,29 @@
 |---|---|---|
 | `api` (Controller) | HTTP 요청/응답 변환, 인증 주체(`@AuthenticationPrincipal Member`) 받기, 입력 형식 검증 | API 스펙이 바뀔 때 |
 | `application` (Service) | 유스케이스 흐름 조립, 트랜잭션 경계 | 업무 흐름이 바뀔 때 |
-| `domain` (Entity, VO, 포트) | 상태 전이, 불변식 (예: `BrokerProfile` 확인 상태) | 업무 규칙이 바뀔 때 |
+| `domain` (Entity, VO, 포트) | 상태 전이, 불변식 (예: `CompanyMembership` 승인 상태) | 업무 규칙이 바뀔 때 |
 | 어댑터 (`storage/local`, `llm/springai`) | 외부 기술 연동 | 저장소·SDK 가 바뀔 때 |
 
 **불변식은 쪼개지 않는다**: "SRP 니까" 하고 함께 지켜야 하는 규칙을 두 클래스로 나누면 둘 중 하나만 바뀌는 틈이 생긴다.
 
-**나쁜 예**: 중개사 승인과 회원 권한 변경이 서로 다른 서비스에 있다. 한쪽만 호출되면 `BROKER` 권한인데 확인되지 않은 회원이 생긴다.
+**나쁜 예**: 담당자 승인과 회원 권한 변경이 서로 다른 서비스에 있다. 한쪽만 호출되면 `COMPANY` 권한인데 승인되지 않은 회원이 생긴다.
 
 ```java
-brokerProfileService.verify(profileId);       // status = VERIFIED
-memberService.changeRole(memberId, BROKER);   // 호출을 빠뜨리거나 실패하면 불일치
+membershipService.approve(membershipId);       // status = APPROVED
+memberService.changeRole(memberId, COMPANY);   // 호출을 빠뜨리거나 실패하면 불일치
 ```
 
 **좋은 예**: 상태 전이 메서드 하나가 둘을 같이 바꾸고, 서비스 하나가 같은 트랜잭션에서 부른다.
 
 ```java
-// broker.domain
-public void verify(Member member, Long adminId, Instant now) {
-    if (status != BrokerStatus.PENDING) throw new IllegalBrokerStateException(id, status, "승인");
-    this.status = BrokerStatus.VERIFIED;
-    this.verifiedAt = now;
-    this.verifiedBy = adminId;
-    member.changeRole(RoleType.BROKER);       // 불변식: BROKER ⇔ VERIFIED
+// company.domain
+public void approve(Member member, Company company, Long adminId, Instant now) {
+    if (status != MembershipStatus.PENDING) throw new IllegalMembershipStateException(id, status, "승인");
+    if (!company.isVerified()) throw new IllegalMembershipStateException(id, status, "확인 안 된 업체");
+    this.status = MembershipStatus.APPROVED;
+    this.decidedAt = now;
+    this.decidedBy = adminId;
+    member.changeRole(RoleType.COMPANY);       // 불변식: COMPANY ⇔ APPROVED + 업체 VERIFIED
 }
 ```
 
@@ -63,6 +64,7 @@ public void verify(Member member, Long adminId, Instant now) {
 **정의**: 새 기능을 추가할 때 기존 코드를 수정하지 않고 새 코드를 추가하는 것으로 끝나야 한다.
 
 **fin-broker 의 확장점** (domain-design.md §3)
+- 피해 예방 규칙: `WarningRule` 구현체 `@Component` 하나 (`List<WarningRule>` 주입, domain-design.md §6)
 - AI 공급자: `LlmProvider` enum 값 + `LlmClient` 구현체 + 조건부 빈
 - 파일 저장소: `FileStorage` 구현체 (`storage/local` → S3)
 - 인증 방식: 토큰 타입 + `AuthenticationProvider` 한 쌍 (`MemberAuthenticationToken` + `MemberAuthenticationProvider` 처럼)
@@ -162,7 +164,7 @@ public interface LlmClient {
 
 ```
 com.marinbom2.finbroker
- +- member / broker / community / consultation / moderation
+ +- member / company / community / warning / moderation
  |   +- domain        # 엔티티 + 포트: FileStorage, LlmClient
  |   +- application
  |   +- api

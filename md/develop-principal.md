@@ -9,10 +9,10 @@
 | 영역 | 규칙 | 근거 |
 |---|---|---|
 | enum | 모든 enum(중첩 enum 포함)은 `DescriptionCode` 를 구현하고 한글 `description` 을 가진다. 프론트에는 `{code, description}` 으로 내려간다 | 표시 문구를 서버 한 곳에서 관리 |
-| 예외 | 도메인 규칙 위반 예외는 해당 도메인 패키지(`broker.domain.exception` 등)에 둔다. 모두 unchecked | 의존 방향(domain 이 바깥을 모름), 자동 롤백 |
+| 예외 | 도메인 규칙 위반 예외는 해당 도메인 패키지(`company.domain.exception` 등)에 둔다. 모두 unchecked | 의존 방향(domain 이 바깥을 모름), 자동 롤백 |
 | 요구사항 추적 | 코드에 `FR-…`, `SCR-…` ID 를 주석·라우트 이름에 남긴다 | 요구사항 정의서·화면설계서를 개발 후 산출물로 뽑음 |
 | 주석 | 필요한 곳에만 한두 줄. 날짜를 넣지 않는다. HTML 태그를 쓰지 않는다 | 날짜·경위는 git 기록과 md 문서가 맡는다 |
-| 화면 문구 | "원금 보장", "확정 수익", "무조건 승인" 같은 단정 표현을 쓰지 않는다 | 금융상품 광고·권유 규제 (domain-design.md §12) |
+| 화면 문구 | "무조건 승인", "100% 가능", "무심사", "저금리 보장" 같은 단정 표현을 쓰지 않는다 | 대출 광고·권유로 오해받지 않게 (domain-design.md §12) |
 | JWT | jjwt 0.13 + `jjwt-gson`. `jjwt-jackson` 은 쓰지 않는다 | Boot 4 의 Jackson 3(`tools.jackson`)와 Jackson 2 가 섞임 |
 | 모듈 | 도메인·공통 yml 은 `common:core`, API 는 `server`, 배치는 `batch`. 앱 모듈끼리 의존하지 않는다 | server·batch 가 같은 도메인을 씀 |
 | 비밀 값 | `src/main/resources` 에 두지 않는다. 로컬은 루트 `secrets/`, 운영은 환경변수 | resources 에 두면 jar·이미지에 들어감 |
@@ -28,7 +28,7 @@
 
 - 서버의 **모든 enum** 은 `com.marinbom2.finbroker.type.common.DescriptionCode` 를 구현한다.
 - 한글 `description` 필드를 가진다. 화면에 그대로 나가는 문구이므로 단정 표현(한눈에 보기 "화면 문구")을 쓰지 않는다.
-- `@JsonFormat(shape = Shape.OBJECT)` 를 붙여 JSON 으로 `{"code": "BROKER", "description": "판매대리·중개업자"}` 형태로 직렬화한다.
+- `@JsonFormat(shape = Shape.OBJECT)` 를 붙여 JSON 으로 `{"code": "COMPANY", "description": "등록 업체"}` 형태로 직렬화한다.
 - 클라이언트(React)는 `code` 로 분기·비교하고 `description` 으로 표시한다. 프론트에 한글 문구를 중복 정의하지 않는다.
 
 ### 서버 작성 형태
@@ -40,7 +40,7 @@
 public enum RoleType implements DescriptionCode {
 
     USER("금융소비자"),
-    BROKER("판매대리·중개업자"),
+    COMPANY("등록 업체"),
     ADMIN("관리자"),
     SYSTEM("시스템 관리자");
 
@@ -65,15 +65,15 @@ export interface CodeLabel<C extends string = string> {
 }
 
 // shared/api/member/memberService.ts
-export type RoleCode = 'USER' | 'BROKER' | 'ADMIN' | 'SYSTEM'
+export type RoleCode = 'USER' | 'COMPANY' | 'ADMIN' | 'SYSTEM'
 
-if (member.roleType.code === 'BROKER') { ... }    // 비교는 code 로만
+if (member.roleType.code === 'COMPANY') { ... }    // 비교는 code 로만
 <span>{member.roleType.description}</span>        // 표시는 description 으로만
 ```
 
 ### 주의
 
-- **요청(입력) 방향**: 클라이언트가 enum 값을 보낼 때는 `"BROKER"` 문자열 하나만 보낸다. `@JsonFormat(shape = OBJECT)` 는 직렬화에만 영향을 준다.
+- **요청(입력) 방향**: 클라이언트가 enum 값을 보낼 때는 `"COMPANY"` 문자열 하나만 보낸다. `@JsonFormat(shape = OBJECT)` 는 직렬화에만 영향을 준다.
 - **JPA 저장**: `@Enumerated(EnumType.STRING)` 로 `code` 가 저장된다. `description` 은 DB 에 넣지 않는다.
 
 ---
@@ -84,7 +84,7 @@ if (member.roleType.code === 'BROKER') { ... }    // 비교는 code 로만
 
 | 종류 | 패키지 | 예 |
 |---|---|---|
-| 도메인 규칙 위반 | 각 도메인의 `domain.exception` | `IllegalBrokerStateException` (예정) |
+| 도메인 규칙 위반 | 각 도메인의 `domain.exception` | `IllegalMembershipStateException` (예정) |
 | 계층 공통 (조회 실패, 권한, 입력 형식) | core `exception.BusinessException` + `type.common.ErrorCode` | `throw new BusinessException(ErrorCode.NOT_FOUND_MEMBER)`. 예외 클래스를 늘리지 않고 ErrorCode 항목을 늘린다 |
 | 외부 연동 실패 | 어댑터 패키지 안에서 잡아 포트 규약의 예외로 바꿔 던짐 | Spring AI 오류 → `LlmUnavailableException` (예정) |
 
@@ -262,13 +262,13 @@ Tomcat -> 필터 체인 (FilterChainProxy)        <- 401/403 이 여기서 난�
 
 | 대상 | 경로 | 예 |
 |---|---|---|
-| 사용자 API | `/api/v1/{리소스}` | `/api/v1/posts`, `/api/v1/posts/{postId}/answers` |
+| 사용자 API | `/api/v1/{리소스}` | `/api/v1/posts`, `/api/v1/companies/{companyId}` |
 | 인증 | `/api/v1/auth/...` | `/api/v1/auth/login`, `/api/v1/auth/logout` |
 | 내 정보 | `/api/v1/me` | |
-| 운영자 API (SCR-08) | `/api/v1/ops/...` | `/api/v1/ops/broker-applications` |
+| 운영자 API (SCR-08) | `/api/v1/ops/...` | `/api/v1/ops/company-memberships` |
 
 - 모든 API 는 `/api/` 로 시작한다. Vite 프록시와 시큐리티 규칙이 이 접두사를 기준으로 한다.
-- 리소스는 복수 명사, 여러 단어면 kebab-case (`/broker-applications`). 동작은 HTTP 메서드로 나타낸다.
+- 리소스는 복수 명사, 여러 단어면 kebab-case (`/company-memberships`). 동작은 HTTP 메서드로 나타낸다.
 - 컨트롤러 클래스에 `@RequestMapping("/api/v1/...")` 를 두고, 메서드에는 나머지 경로만 쓴다.
 - 성공은 DTO 그대로 (`201`·`204` 는 `@ResponseStatus` 로), 오류는 `BusinessException` 을 던져 ProblemDetail 로.
 
@@ -307,7 +307,7 @@ public class PostController {
 
 ## 9. 작업 순서
 
-1. 새 영역(중개사 등록, 커뮤니티 등)은 **뼈대 먼저**: 패키지, 클래스 이름, 포트 시그니처, 상태 전이.
+1. 새 영역(업체 조회, 커뮤니티 등)은 **뼈대 먼저**: 패키지, 클래스 이름, 포트 시그니처, 상태 전이.
 2. 뼈대를 리뷰한 뒤 구현을 채운다.
 3. 단위 테스트는 인프라 없이 돌아가는 도메인 테스트를 먼저, 통합 테스트(Testcontainers)는 어댑터가 생긴 뒤.
 
