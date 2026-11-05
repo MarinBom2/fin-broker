@@ -1,7 +1,7 @@
 # fin-broker 도메인 설계 — 대출 정보 커뮤니티
 
 > 상태: **초안**. 운영 주체는 **개인사업자(소프트웨어 판매업)** 이고, 대부업·대부중개업·대출모집 등록 없이 할 수 있는 범위로 설계한다 (§12). 대출나라 같은 대출 커뮤니티를 참고하되, 수익 구조는 가져오지 않고 신뢰(등록 확인·광고 분리·피해 예방)로 차별화한다.
-> 구현된 것은 회원·인증(§5.1)뿐이고, 나머지는 리뷰 후 뼈대부터 채운다 (develop-principal.md §9).
+> 구현된 것: 회원·인증(§5.1), 업체 조회·운영자 등록·대조(§5.2), 피해 예방 규칙과 검사 API(§6). 나머지는 리뷰 후 뼈대부터 채운다 (develop-principal.md §9).
 > 관련 문서: [develop-principal.md](./develop-principal.md), [authentication-security.md](./authentication-security.md), [solid.md](./solid.md), [runtime-structure.md](./runtime-structure.md), [todo.md](./todo.md)
 > 모르는 값은 `[ ]`로 비워 둔다. 법령에 기대는 내용은 `[확인]`을 붙인 초안이고, 원문(대부업법, 금융소비자보호법, 정보통신망법, 전기통신사업법, 전자상거래법, 개인정보보호법)과 전문가 확인 뒤 확정한다. 이 문서는 법률 자문이 아니다.
 
@@ -68,7 +68,7 @@ ops ── 운영자 집계 (/api/v1/ops/**)
 
 | 포트 | 소유 | 1단계 구현 | 다음 구현 | 상태 |
 |---|---|---|---|---|
-| `WarningRule` | `warning.domain` | 규칙 클래스 다섯 개 (§6) | 규칙 추가는 `@Component` 하나 | 1단계에 만든다 |
+| `WarningRule` | `warning.domain` | 규칙 클래스 다섯 개 (§6, `warning.rule`) | 규칙 추가는 `@Component` 하나 | 구현 |
 | `LlmClient` | `warning.domain` | 없음 | `llm/springai` (Spring AI). 공급자 추가는 `LlmProvider` 값 + 구현체 + 조건부 빈 | 아직 코드 없음 |
 | `RegistryLookup` | `company.domain` | 운영자 수동 입력 | 공공 조회 연동 `[확인: 공개 데이터·API 유무]` | 아직 코드 없음 |
 | `FileStorage` | `company.domain` | 없음 | `storage/local` → S3. 담당자 재직 증빙 첨부 | 아직 코드 없음 |
@@ -259,8 +259,8 @@ enum 칼럼은 varchar (`NoColumnCheckMySQLDialect`, develop-principal.md §5).
 | SCR-02 | 게시판 목록 (글 유형·대출 유형별) | `/posts?postType=&loanType=` | |
 | SCR-03 | 글 상세 + 답변 | `/posts/:postId` | |
 | SCR-04 | 글쓰기 (경고 미리 보기) | `/posts/new` | |
-| SCR-05 | 업체 조회 (등록 정보 + 후기) | `/companies`, `/companies/:companyId` | |
-| SCR-06 | 피해 예방 안내 (사기 수법, 신고 창구) | `/safety` | |
+| SCR-05 | 업체 조회 (등록 정보 + 후기) | `/companies`, `/companies/:companyId` | 구현 (후기 제외) |
+| SCR-06 | 피해 예방 안내 (사기 수법, 신고 창구, 받은 문자 검사) | `/safety` | 구현 |
 | SCR-07 | 로그인·가입 | `/login` | 구현 |
 | SCR-08 | 운영자 (업체 대조, 담당자 승인, 신고) | `/ops` | |
 | SCR-09 | 업체 담당자 인증 신청 | `/company/apply` | |
@@ -272,13 +272,13 @@ enum 칼럼은 varchar (`NoColumnCheckMySQLDialect`, develop-principal.md §5).
 | FR-AU-001 | 이메일·비밀번호 가입 | 구현 |
 | FR-AU-002 | 로그인·로그아웃·내 정보 (JWT HttpOnly 쿠키) | 구현 |
 | FR-AU-003 | 역할 기반 인가 (`USER`, `COMPANY`, `ADMIN`, `SYSTEM`) | 구현 (운영자 경로) |
-| FR-CO-001 | 업체 조회 (등록 정보, 확인 상태, 관련 후기) | |
-| FR-CO-002 | 운영자 업체 등록·대조·만료 처리 | |
+| FR-CO-001 | 업체 조회 (등록 정보, 확인 상태, 관련 후기) | 구현 (후기 제외) |
+| FR-CO-002 | 운영자 업체 등록·대조·만료 처리 | 구현 (API. 운영자 화면은 SCR-08) |
 | FR-CO-003 | 업체 담당자 인증 신청·승인·해제 | |
 | FR-CM-001 | 글 작성·수정·삭제 | |
 | FR-CM-002 | 글 목록·상세 | |
 | FR-CM-003 | 답변 작성 (업체 답변 구분 표시) | |
-| FR-WN-001 | 피해 예방 경고 미리 보기 | |
+| FR-WN-001 | 피해 예방 경고 미리 보기 | 구현 |
 | FR-WN-002 | 저장 시 경고 판정 (BLOCK 거부, WARN 배지) | |
 | FR-MD-001 | 글·답변 신고 | |
 | FR-MD-002 | 운영자 신고 처리·숨김 | |
@@ -293,7 +293,7 @@ enum 칼럼은 varchar (`NoColumnCheckMySQLDialect`, develop-principal.md §5).
 | POST | `/api/v1/auth/login` | 없음 (필터) | FR-AU-002 |
 | POST | `/api/v1/auth/logout` | 없음 | FR-AU-002 |
 | GET | `/api/v1/me` | 로그인 | FR-AU-002 |
-| GET | `/api/v1/companies?name=&registrationNumber=` | 로그인 `[확인: 비로그인 공개 여부]` | FR-CO-001 |
+| GET | `/api/v1/companies?keyword=&page=&size=` (상호 일부 또는 등록번호, 상호순) | 로그인 `[확인: 비로그인 공개 여부]` | FR-CO-001 |
 | GET | `/api/v1/companies/{companyId}` | 로그인 | FR-CO-001 |
 | POST | `/api/v1/company-memberships` | USER | FR-CO-003 |
 | GET | `/api/v1/posts?postType=&loanType=&companyId=&page=` | 로그인 | FR-CM-002 |
@@ -302,7 +302,8 @@ enum 칼럼은 varchar (`NoColumnCheckMySQLDialect`, develop-principal.md §5).
 | POST | `/api/v1/posts/{postId}/answers` | 로그인 | FR-CM-003, FR-WN-002 |
 | POST | `/api/v1/warnings/check` | 로그인 | FR-WN-001 |
 | POST | `/api/v1/reports` | 로그인 | FR-MD-001 |
-| GET·POST·PATCH | `/api/v1/ops/companies/**` | ADMIN, SYSTEM | FR-CO-002 |
+| POST | `/api/v1/ops/companies` | ADMIN, SYSTEM | FR-CO-002 |
+| PATCH | `/api/v1/ops/companies/{companyId}/registration-status` (`{result}`) | ADMIN, SYSTEM | FR-CO-002 |
 | GET·PATCH | `/api/v1/ops/company-memberships/**` | ADMIN, SYSTEM | FR-CO-003 |
 | GET·PATCH | `/api/v1/ops/reports/**` | ADMIN, SYSTEM | FR-MD-002 |
 

@@ -39,16 +39,19 @@
 - [ ] SPA 포워딩: `/api` 가 아닌 화면 경로 새로고침을 `index.html` 로 (runtime-structure §6)
   - 끝 기준: `-PwithClient` 로 띄워 `/login` 새로고침이 화면을 연다. `/api/없는경로` 는 계속 404 ProblemDetail
 - [ ] 스키마 관리 도구 결정 (Flyway 등). 정하면 prod `ddl-auto: validate`
-- [ ] 페이지 응답 DTO (`PageResponse`) — 첫 목록 API 를 만들 때
+- [x] 페이지 응답 DTO (`PageResponse`, 1부터) — 업체 조회에서 만들었다
 - [ ] CI (GitHub Actions): `./gradlew build -PskipClient` + `npm run build`·`lint`
 
 ## 4. 업체 조회와 피해 예방 (`company`, `warning`, domain-design §4.1·§5.2·§6)
 
-- [ ] 뼈대: `Company`, `CompanyType`, `RegistrationStatus`, 운영자 등록·대조 API (FR-CO-002), 조회 API (FR-CO-001)
-  - 끝 기준: 업체 정보에 금리·한도·홍보 칸이 없다. 목록 순서가 이름순·등록순처럼 돈과 무관하다
-- [ ] `WarningRule` 와 규칙 다섯 개, 미리 보기 API (FR-WN-001)
-  - 어떻게: 규칙마다 단위 테스트 (잡아야 할 문장 / 잡으면 안 되는 문장). 금리는 `연`·`월`·`일` 표기를 연 금리로 환산해 비교
-- [ ] 화면: SCR-05 업체 조회, SCR-06 피해 예방 안내
+- [x] `Company`, `CompanyType`, `RegistrationStatus`, 운영자 등록·대조 API (FR-CO-002), 조회 API (FR-CO-001)
+  - 끝 기준: 업체 정보에 금리·한도·홍보 칸이 없다. 목록 순서가 상호순·등록순처럼 돈과 무관하다 (`CompanyFlowTest`)
+- [x] `WarningRule` 와 규칙 다섯 개, 검사 API (FR-WN-001)
+  - 어떻게: 규칙마다 단위 테스트 (잡아야 할 문장 / 잡으면 안 되는 문장). 금리는 `연`·`월`·`주`·`일` 표기를 연 금리로 환산해 비교
+  - [ ] 실제 사기 문자 사례를 모아 규칙 테스트 문장을 늘린다 (놓치는 표현, 잘못 잡는 표현)
+- [x] 화면: SCR-05 업체 조회, SCR-06 피해 예방 안내 + 받은 문자 검사
+- [ ] 운영자 업체 등록·대조 화면 (SCR-08). 지금은 API·`http/local.http` 로만 한다
+- [ ] 업체 등록 정보 대조 출처 정하기 (domain-design §13)
 
 ## 5. 커뮤니티 (`community`, `moderation`)
 

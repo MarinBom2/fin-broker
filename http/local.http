@@ -28,3 +28,29 @@ GET {{host}}/api/v1/ops/summary
 
 ### 로그아웃
 POST {{host}}/api/v1/auth/logout
+
+### ---- 업체 (운영자: 위 내 권한 바꾸기에서 ADMIN 으로 바꾼 뒤) ----
+
+### 업체 등록 (FR-CO-002)
+POST {{host}}/api/v1/ops/companies
+Content-Type: application/json
+
+{"name": "가나대부", "companyType": "LENDER", "registrationNumber": "2026-서울-0001", "registrationAuthority": "서울특별시"}
+
+### 등록 정보 대조 결과 (VERIFIED / NOT_FOUND / EXPIRED)
+PATCH {{host}}/api/v1/ops/companies/1/registration-status
+Content-Type: application/json
+
+{"result": "VERIFIED"}
+
+### 업체 검색 (FR-CO-001). 상호 일부 또는 등록번호, 상호순, 페이지는 1부터
+GET {{host}}/api/v1/companies?keyword=대부&page=1&size=20
+
+### 업체 상세
+GET {{host}}/api/v1/companies/1
+
+### 피해 예방 검사 (FR-WN-001). 저장하지 않는다
+POST {{host}}/api/v1/warnings/check
+Content-Type: application/json
+
+{"body": "선입금 30만원 보내 주시면 월 3%로 바로 승인. 체크카드는 택배로", "companyId": null}

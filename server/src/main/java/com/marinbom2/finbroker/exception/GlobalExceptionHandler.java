@@ -1,5 +1,6 @@
 package com.marinbom2.finbroker.exception;
 
+import com.marinbom2.finbroker.company.domain.exception.IllegalCompanyStateException;
 import com.marinbom2.finbroker.type.common.ErrorCode;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 /**
@@ -30,10 +32,32 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ProblemDetails.of(e.getErrorCode(), e.getMessage());
     }
 
+    /** 예외 메시지(업체 ID·상태)는 로그로만 */
+    @ExceptionHandler(IllegalCompanyStateException.class)
+    public ProblemDetail handleIllegalCompanyState(IllegalCompanyStateException e) {
+        log.info("company state conflict: {}", e.getMessage());
+        return ProblemDetails.of(ErrorCode.COMPANY_STATE_CONFLICT);
+    }
+
     @ExceptionHandler(Exception.class)
     public ProblemDetail handleUnexpected(Exception e) {
         log.error("unexpected error", e);
         return ProblemDetails.of(ErrorCode.INTERNAL_ERROR);
+    }
+
+    /** 요청 파라미터 검증(@Min 등) 실패: 본문 검증과 같은 INVALID_REQUEST_DATA + errors */
+    @Override
+    protected ResponseEntity<Object> handleHandlerMethodValidationException(
+            HandlerMethodValidationException e, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        ProblemDetail problem = ProblemDetails.of(ErrorCode.INVALID_REQUEST_DATA);
+        List<Map<String, String>> errors = e.getParameterValidationResults().stream()
+                .flatMap(result -> result.getResolvableErrors().stream()
+                        .map(error -> Map.of(
+                                "field", String.valueOf(result.getMethodParameter().getParameterName()),
+                                "message", String.valueOf(error.getDefaultMessage()))))
+                .toList();
+        problem.setProperty(ProblemDetails.ERRORS, errors);
+        return handleExceptionInternal(e, problem, headers, status, request);
     }
 
     /** @Valid 검증 실패: 필드별 오류를 errors 로 함께 내보낸다 */

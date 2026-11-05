@@ -30,6 +30,7 @@ public enum ErrorCode implements DescriptionCode {
     NOT_FOUND(404, "올바른 경로가 아닙니다."),
     NOT_FOUND_DATA(404, "요청한 정보를 찾을 수 없습니다."),
     NOT_FOUND_MEMBER(404, "회원 정보를 찾을 수 없습니다."),
+    NOT_FOUND_COMPANY(404, "업체 정보를 찾을 수 없습니다."),
 
     /* 405 */
     METHOD_NOT_ALLOWED(405, "지원하지 않는 요청 방식입니다."),
@@ -37,6 +38,7 @@ public enum ErrorCode implements DescriptionCode {
     /* 409 */
     CONFLICT(409, "요청이 현재 상태와 충돌합니다."),
     ALREADY_EXIST(409, "이미 존재합니다."),
+    COMPANY_STATE_CONFLICT(409, "지금 업체 등록 상태에서는 할 수 없는 처리입니다."),
 
     /* 413 */
     PAYLOAD_TOO_LARGE(413, "요청 크기가 너무 큽니다."),

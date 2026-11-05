@@ -23,6 +23,16 @@ export interface FieldError {
   message: string
 }
 
+/** 서버 PageResponse 와 1:1. pageNumber 는 1부터 */
+export interface PageResponse<TItem> {
+  content: TItem[]
+  pageNumber: number
+  pageSize: number
+  totalSize: number
+  totalPages: number
+  hasNext: boolean
+}
+
 /** 서버 enum(DescriptionCode)은 {code, description} 객체로 온다. 비교는 code, 표시는 description */
 export interface CodeLabel<C extends string = string> {
   code: C

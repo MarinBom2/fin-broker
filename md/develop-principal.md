@@ -84,7 +84,7 @@ if (member.roleType.code === 'COMPANY') { ... }    // 비교는 code 로만
 
 | 종류 | 패키지 | 예 |
 |---|---|---|
-| 도메인 규칙 위반 | 각 도메인의 `domain.exception` | `IllegalMembershipStateException` (예정) |
+| 도메인 규칙 위반 | 각 도메인의 `domain.exception` | `IllegalCompanyStateException` |
 | 계층 공통 (조회 실패, 권한, 입력 형식) | core `exception.BusinessException` + `type.common.ErrorCode` | `throw new BusinessException(ErrorCode.NOT_FOUND_MEMBER)`. 예외 클래스를 늘리지 않고 ErrorCode 항목을 늘린다 |
 | 외부 연동 실패 | 어댑터 패키지 안에서 잡아 포트 규약의 예외로 바꿔 던짐 | Spring AI 오류 → `LlmUnavailableException` (예정) |
 
@@ -222,7 +222,8 @@ security:
 | 예외 | ErrorCode | 비고 |
 |---|---|---|
 | `BusinessException` | 담긴 값 | 메시지가 `detail` 이 된다 |
-| `@Valid` 실패 | `INVALID_REQUEST_DATA` (400) | `errors` 추가 |
+| `IllegalCompanyStateException` | `COMPANY_STATE_CONFLICT` (409) | 예외 메시지(ID·상태)는 로그로만 |
+| `@Valid` 실패, 요청 파라미터 검증(`@Min` 등) 실패 | `INVALID_REQUEST_DATA` (400) | `errors` 추가 (`field` 는 본문 필드명 또는 파라미터명) |
 | Spring MVC 예외 | 상태별 기본값 (`ErrorCode.defaultFor`) | Spring 의 영문 `detail` 은 로그로만 |
 | 그 밖의 예외 | `INTERNAL_ERROR` (500) | 스택은 로그로만 |
 
@@ -271,6 +272,7 @@ Tomcat -> 필터 체인 (FilterChainProxy)        <- 401/403 이 여기서 난�
 - 리소스는 복수 명사, 여러 단어면 kebab-case (`/company-memberships`). 동작은 HTTP 메서드로 나타낸다.
 - 컨트롤러 클래스에 `@RequestMapping("/api/v1/...")` 를 두고, 메서드에는 나머지 경로만 쓴다.
 - 성공은 DTO 그대로 (`201`·`204` 는 `@ResponseStatus` 로), 오류는 `BusinessException` 을 던져 ProblemDetail 로.
+- 목록은 `PageResponse<T>` (server `common.api`). 요청·응답의 페이지 번호는 **1부터**다. Spring Data 의 0부터를 API 밖으로 내보내지 않는다. `size` 는 상한을 둔다 (`@Max`).
 
 ### Swagger 규칙
 
