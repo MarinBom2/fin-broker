@@ -106,6 +106,26 @@ export const PhoneIcon = (p: IconProps) => (
   </svg>
 )
 
+export const ChatIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M7 18.5 3.5 21V6a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2v10.5a2 2 0 0 1-2 2H7Z" />
+    <path d="M8 9h8M8 13h5" />
+  </svg>
+)
+
+export const PencilIcon = (p: IconProps) => (
+  <svg {...base(p)}>
+    <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z" />
+    <path d="m13.5 6.5 4 4" />
+  </svg>
+)
+
+export const XIcon = (p: IconProps) => (
+  <svg {...base({ size: 14, strokeWidth: 2.4, ...p })}>
+    <path d="M6 6l12 12M18 6 6 18" />
+  </svg>
+)
+
 export const BrandMark = (p: IconProps) => (
   <svg {...base({ size: 14, strokeWidth: 2.4, ...p })}>
     <path d="M12 4 6 6.5v4.8c0 3.6 2.5 6.6 6 7.7 3.5-1.1 6-4.1 6-7.7V6.5L12 4Z" />

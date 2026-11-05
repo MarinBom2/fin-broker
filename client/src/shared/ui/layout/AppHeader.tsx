@@ -17,6 +17,9 @@ export function AppHeader() {
           fin-broker
         </Link>
         <nav className="nav__links" aria-label="주 메뉴">
+          <NavLink to={ROUTES.SCR02_POSTS} className="nav__link">
+            커뮤니티
+          </NavLink>
           <NavLink to={ROUTES.SCR05_COMPANIES} className="nav__link">
             업체 조회
           </NavLink>

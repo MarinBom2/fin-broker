@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { ROUTES } from '../../routes'
-import { BuildingIcon, ChevronRightIcon, ShieldIcon } from '../../shared/ui/icons/Icons'
+import { BuildingIcon, ChatIcon, ChevronRightIcon, ShieldIcon } from '../../shared/ui/icons/Icons'
 
 /** 멈춰야 할 신호. 서버 피해 예방 규칙(md/domain-design.md §6)과 같은 항목이다 */
 const STOP_SIGNALS = [
@@ -46,9 +46,9 @@ export default function HomePage() {
 
       <section className="home-section">
         <h2 className="home-section__title">
-          거래 전에 두 가지만. <span>1분이면 충분해요.</span>
+          거래 전에, 그리고 고민될 때. <span>혼자 판단하지 마세요.</span>
         </h2>
-        <div className="grid-2">
+        <div className="grid-3">
           <Link to={ROUTES.SCR05_COMPANIES} className="card card--link">
             <span className="card__icon card__icon--blue">
               <BuildingIcon size={26} />
@@ -67,6 +67,16 @@ export default function HomePage() {
             <p className="card__body">선입금·고금리·통장 요구 같은 위험 신호를 찾아 드려요. 붙여 넣은 내용은 저장하지 않아요.</p>
             <span className="card__more">
               검사하기 <ChevronRightIcon />
+            </span>
+          </Link>
+          <Link to={ROUTES.SCR02_POSTS} className="card card--link">
+            <span className="card__icon card__icon--orange">
+              <ChatIcon size={26} />
+            </span>
+            <h3 className="card__title">커뮤니티</h3>
+            <p className="card__body">질문하고 후기와 피해 사례를 나눠요. 모든 글은 익명이고, 연락처는 올릴 수 없어요.</p>
+            <span className="card__more">
+              둘러보기 <ChevronRightIcon />
             </span>
           </Link>
         </div>

@@ -54,3 +54,23 @@ POST {{host}}/api/v1/warnings/check
 Content-Type: application/json
 
 {"body": "선입금 30만원 보내 주시면 월 3%로 바로 승인. 체크카드는 택배로", "companyId": null}
+
+### ---- 커뮤니티 (FR-CM-001~003). 작성자는 역할로만 보인다 ----
+
+### 글 목록 (최신순, 유형 필터)
+GET {{host}}/api/v1/posts?postType=QUESTION&loanType=CREDIT&page=1&size=20
+
+### 글쓰기. 연락처가 있으면 400 CONTENT_BLOCKED + warnings
+POST {{host}}/api/v1/posts
+Content-Type: application/json
+
+{"postType": "QUESTION", "loanType": "CREDIT", "companyId": null, "title": "신용점수 600점대, 신용대출 가능할까요?", "body": "직장 1년차입니다"}
+
+### 글 상세 + 답변
+GET {{host}}/api/v1/posts/1
+
+### 답변 달기
+POST {{host}}/api/v1/posts/1/answers
+Content-Type: application/json
+
+{"body": "공식 상담 창구에 먼저 물어보세요"}

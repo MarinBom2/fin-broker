@@ -3,8 +3,9 @@ import type { FormEvent } from 'react'
 import { warningApi } from '../../shared/api/warning/warningService'
 import type { WarningCheckResult } from '../../shared/api/warning/warningService'
 import { ApiError, errorMessage } from '../../shared/core/apiClient'
-import { BlockIcon, CheckCircleIcon, ExclamationIcon, PhoneIcon } from '../../shared/ui/icons/Icons'
+import { CheckCircleIcon, ExclamationIcon, PhoneIcon } from '../../shared/ui/icons/Icons'
 import { PageHead } from '../../shared/ui/PageHead'
+import { WarningList } from '../../shared/ui/WarningList'
 
 const MAX_LENGTH = 5000
 
@@ -91,24 +92,7 @@ export default function SafetyPage() {
                 <ExclamationIcon size={26} className="summary__icon" />
                 위험 신호 {result.warnings.length}개를 찾았어요.
               </p>
-              {result.warnings.map((warning, index) => {
-                const blocked = warning.type.severity.code === 'BLOCK'
-                return (
-                  <article key={`${warning.type.code}-${index}`} className={`signal ${blocked ? 'signal--block' : 'signal--warn'}`}>
-                    <span className="signal__icon">{blocked ? <BlockIcon /> : <ExclamationIcon />}</span>
-                    <div className="signal__body">
-                      <div className="signal__head">
-                        <h3 className="signal__title">{warning.type.description}</h3>
-                        <span className={`pill pill--plain ${blocked ? 'pill--red' : 'pill--gray'}`}>
-                          {warning.type.severity.description}
-                        </span>
-                      </div>
-                      <p className="signal__evidence">“{warning.evidence}”</p>
-                      <p className="signal__guide">{warning.type.guidance}</p>
-                    </div>
-                  </article>
-                )
-              })}
+              <WarningList warnings={result.warnings} />
             </>
           )}
         </section>

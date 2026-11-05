@@ -2,6 +2,9 @@ import type { ReactNode } from 'react'
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
 import CompanyDetailPage from './pages/company/CompanyDetailPage'
 import CompanyListPage from './pages/company/CompanyListPage'
+import PostDetailPage from './pages/community/PostDetailPage'
+import PostListPage from './pages/community/PostListPage'
+import PostWritePage from './pages/community/PostWritePage'
 import HomePage from './pages/home/HomePage'
 import LoginPage from './pages/login/LoginPage'
 import SafetyPage from './pages/safety/SafetyPage'
@@ -36,6 +39,30 @@ export default function App() {
         <Shell>
           <Routes>
             <Route path={ROUTES.SCR01_HOME} element={<HomePage />} />
+            <Route
+              path={ROUTES.SCR02_POSTS}
+              element={
+                <RequireAuth>
+                  <PostListPage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path={ROUTES.SCR04_POST_NEW}
+              element={
+                <RequireAuth>
+                  <PostWritePage />
+                </RequireAuth>
+              }
+            />
+            <Route
+              path={ROUTES.SCR03_POST}
+              element={
+                <RequireAuth>
+                  <PostDetailPage />
+                </RequireAuth>
+              }
+            />
             <Route
               path={ROUTES.SCR05_COMPANIES}
               element={

@@ -17,6 +17,7 @@ public enum ErrorCode implements DescriptionCode {
     /* 400 */
     BAD_REQUEST(400, "잘못된 요청입니다."),
     INVALID_REQUEST_DATA(400, "입력값을 다시 확인해 주세요."),
+    CONTENT_BLOCKED(400, "글에 쓸 수 없는 내용이 있어요. 표시된 부분을 지우고 다시 올려 주세요."),
 
     /* 401 */
     UNAUTHORIZED(401, "로그인이 필요합니다."),
@@ -31,6 +32,7 @@ public enum ErrorCode implements DescriptionCode {
     NOT_FOUND_DATA(404, "요청한 정보를 찾을 수 없습니다."),
     NOT_FOUND_MEMBER(404, "회원 정보를 찾을 수 없습니다."),
     NOT_FOUND_COMPANY(404, "업체 정보를 찾을 수 없습니다."),
+    NOT_FOUND_POST(404, "글을 찾을 수 없습니다. 삭제되었거나 숨겨진 글일 수 있습니다."),
 
     /* 405 */
     METHOD_NOT_ALLOWED(405, "지원하지 않는 요청 방식입니다."),

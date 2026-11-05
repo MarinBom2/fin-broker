@@ -2,6 +2,7 @@ package com.marinbom2.finbroker.exception;
 
 import com.marinbom2.finbroker.company.domain.exception.IllegalCompanyStateException;
 import com.marinbom2.finbroker.type.common.ErrorCode;
+import com.marinbom2.finbroker.warning.domain.exception.ContentBlockedException;
 import java.util.List;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,9 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
+    /** CONTENT_BLOCKED 때 찾은 신호 목록 */
+    static final String WARNINGS = "warnings";
+
     @ExceptionHandler(BusinessException.class)
     public ProblemDetail handleBusiness(BusinessException e) {
         log.info("business error: {} {}", e.getErrorCode(), e.getMessage());
@@ -37,6 +41,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ProblemDetail handleIllegalCompanyState(IllegalCompanyStateException e) {
         log.info("company state conflict: {}", e.getMessage());
         return ProblemDetails.of(ErrorCode.COMPANY_STATE_CONFLICT);
+    }
+
+    /** 저장할 수 없는 내용: 어느 신호인지 화면이 보여 줄 수 있게 warnings 를 함께 (근거 조각은 이미 가려져 있다) */
+    @ExceptionHandler(ContentBlockedException.class)
+    public ProblemDetail handleContentBlocked(ContentBlockedException e) {
+        log.info("content blocked: {}", e.getMessage());
+        ProblemDetail problem = ProblemDetails.of(ErrorCode.CONTENT_BLOCKED);
+        problem.setProperty(WARNINGS, e.getWarnings().stream()
+                .map(w -> Map.of("type", w.type(), "evidence", w.evidence()))
+                .toList());
+        return problem;
     }
 
     @ExceptionHandler(Exception.class)
