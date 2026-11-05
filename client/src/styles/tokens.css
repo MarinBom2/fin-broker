@@ -1,0 +1,80 @@
+/*
+ * 디자인 토큰. 애플 디자인 언어(중립 회색 바탕, 진한 본문, 파란 포인트 하나, 큰 둥근 모서리, 은은한 그림자)를 참고했다.
+ * 색은 여기서만 정한다. 컴포넌트는 var(--...) 만 쓴다.
+ */
+:root {
+  color-scheme: light;
+
+  --bg: #f5f5f7;
+  --bg-elevated: #ffffff;
+  --bg-grouped: #ffffff;
+  --fill: rgba(118, 118, 128, 0.12);
+  --fill-strong: rgba(118, 118, 128, 0.2);
+  --text: #1d1d1f;
+  --text-secondary: #6e6e73;
+  --text-tertiary: #86868b;
+  --separator: rgba(60, 60, 67, 0.16);
+  --nav-bg: rgba(251, 251, 253, 0.8);
+
+  --accent: #0071e3;
+  --accent-hover: #0077ed;
+  --accent-text: #0066cc;
+  --on-accent: #ffffff;
+
+  --green: #248a3d;
+  --green-fill: rgba(52, 199, 89, 0.14);
+  --orange: #c93400;
+  --orange-fill: rgba(255, 149, 0, 0.14);
+  --red: #d70015;
+  --red-fill: rgba(255, 59, 48, 0.12);
+
+  --radius-s: 10px;
+  --radius-m: 14px;
+  --radius-l: 22px;
+  --radius-pill: 980px;
+
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --shadow-hover: 0 8px 28px rgba(0, 0, 0, 0.1);
+
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Apple SD Gothic Neo', 'Pretendard', 'Malgun Gothic',
+    'Helvetica Neue', system-ui, sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Apple SD Gothic Neo', 'Pretendard',
+    'Malgun Gothic', 'Helvetica Neue', system-ui, sans-serif;
+
+  --content: 980px;
+  --gutter: 22px;
+  --nav-h: 52px;
+  --tab-h: 64px;
+  --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --bg: #000000;
+    --bg-elevated: #1c1c1e;
+    --bg-grouped: #1c1c1e;
+    --fill: rgba(118, 118, 128, 0.24);
+    --fill-strong: rgba(118, 118, 128, 0.36);
+    --text: #f5f5f7;
+    --text-secondary: #a1a1a6;
+    --text-tertiary: #8e8e93;
+    --separator: rgba(84, 84, 88, 0.6);
+    --nav-bg: rgba(22, 22, 23, 0.8);
+
+    --accent: #0a84ff;
+    --accent-hover: #409cff;
+    --accent-text: #2997ff;
+
+    --green: #30d158;
+    --green-fill: rgba(48, 209, 88, 0.18);
+    --orange: #ff9f0a;
+    --orange-fill: rgba(255, 159, 10, 0.18);
+    --red: #ff453a;
+    --red-fill: rgba(255, 69, 58, 0.18);
+
+    --shadow-card: 0 0 0 1px rgba(255, 255, 255, 0.06);
+    --shadow-hover: 0 0 0 1px rgba(255, 255, 255, 0.12);
+  }
+}

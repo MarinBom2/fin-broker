@@ -1,0 +1,109 @@
+/* SCR-01 홈: 넓은 첫 화면 + 기능 카드 + 멈춰야 할 신호 */
+
+.hero {
+  text-align: center;
+  padding: 88px var(--gutter) 72px;
+  background: var(--bg-elevated);
+}
+
+.hero__eyebrow {
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--accent-text);
+  margin-bottom: 10px;
+}
+
+.hero__title {
+  font-size: 64px;
+  line-height: 1.06;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+}
+
+.hero__lede {
+  max-width: 640px;
+  margin: 20px auto 0;
+  font-size: 21px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.hero__actions {
+  margin-top: 32px;
+  justify-content: center;
+}
+
+.hero__visual {
+  margin: 56px auto 0;
+  max-width: 560px;
+  text-align: left;
+}
+
+.home-section {
+  max-width: var(--content);
+  margin: 0 auto;
+  padding: 72px var(--gutter) 0;
+}
+
+.home-section__title {
+  font-size: 40px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  margin-bottom: 28px;
+}
+
+.home-section__title span {
+  color: var(--text-tertiary);
+}
+
+/* 첫 화면의 예시 검사 카드: 실제 결과 화면과 같은 모양을 작게 보여 준다 */
+.preview {
+  border-radius: var(--radius-l);
+  background: var(--bg);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.preview__message {
+  align-self: flex-start;
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 18px 18px 18px 6px;
+  background: var(--fill-strong);
+  font-size: 15px;
+}
+
+.preview__results {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+@media (max-width: 734px) {
+  .hero {
+    padding: 56px var(--gutter) 48px;
+  }
+
+  .hero__eyebrow {
+    font-size: 17px;
+  }
+
+  .hero__title {
+    font-size: 40px;
+  }
+
+  .hero__lede {
+    font-size: 17px;
+  }
+
+  .home-section {
+    padding-top: 48px;
+  }
+
+  .home-section__title {
+    font-size: 28px;
+  }
+}
